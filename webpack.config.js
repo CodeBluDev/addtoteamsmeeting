@@ -1,11 +1,12 @@
 /* eslint-disable no-undef */
 
+const path = require("path");
 const devCerts = require("office-addin-dev-certs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const urlDev = "https://localhost:3000/";
-const urlProd = "https://www.contoso.com/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
+const urlProd = "https://YOUR_VERCEL_DOMAIN.vercel.app/";
 
 async function getHttpsOptions() {
   const httpsOptions = await devCerts.getHttpsServerOptions();
@@ -22,6 +23,8 @@ module.exports = async (env, options) => {
       commands: "./src/commands/commands.js",
     },
     output: {
+      path: path.resolve(__dirname, "dist"),
+      filename: "[name].js",
       clean: true,
     },
     resolve: {

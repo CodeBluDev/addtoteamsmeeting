@@ -17,34 +17,34 @@
   </Hosts>
   <Requirements>
     <Sets>
-      <Set Name="Mailbox" MinVersion="1.8"/>
+      <Set Name="Mailbox" MinVersion="1.3"/>
     </Sets>
   </Requirements>
   <FormSettings>
-    <Form xsi:type="ItemEdit">
+    <Form xsi:type="ItemRead">
       <DesktopSettings>
         <SourceLocation DefaultValue="https://mvteamsmeetinglink.netlify.app/commands.html"/>
       </DesktopSettings>
     </Form>
   </FormSettings>
-  <Permissions>ReadWriteItem</Permissions>
+  <Permissions>ReadWriteMailbox</Permissions>
   <Rule xsi:type="RuleCollection" Mode="Or">
-    <Rule xsi:type="ItemIs" ItemType="Appointment" FormType="Edit"/>
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read"/>
   </Rule>
   <DisableEntityHighlighting>false</DisableEntityHighlighting>
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
     <Requirements>
-      <bt:Sets DefaultMinVersion="1.8">
-        <bt:Set Name="Mailbox" MinVersion="1.8"/>
+      <bt:Sets DefaultMinVersion="1.3">
+        <bt:Set Name="Mailbox" MinVersion="1.3"/>
       </bt:Sets>
     </Requirements>
     <Hosts>
       <Host xsi:type="MailHost">
         <DesktopFormFactor>
           <FunctionFile resid="Commands.Url"/>
-          <ExtensionPoint xsi:type="AppointmentOrganizerCommandSurface">
+          <ExtensionPoint xsi:type="MessageReadCommandSurface">
             <OfficeTab id="TabDefault">
-              <Group id="apptOrgGroup">
+              <Group id="msgReadGroup">
                 <Label resid="GroupLabel"/>
                 <Control xsi:type="Button" id="ActionButton">
                   <Label resid="ActionButton.Label"/>

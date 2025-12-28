@@ -9,6 +9,9 @@ Office.onReady(() => {
   // If needed, Office.js is ready to be called.
 });
 
+const BUILD_TAG = "v1.2.1";
+const BUILD_MARKER = "2024-09-18T14:35Z";
+
 /**
  * Shows a notification when the add-in command is executed.
  * @param event {Office.AddinCommands.Event}
@@ -49,7 +52,7 @@ function addTeamsLinkToLocation(event) {
     item.location.setAsync(newLocation, () => {
       item.notificationMessages.replaceAsync("success", {
         type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
-        message: "Teams meeting link added to Location."
+        message: `Teams meeting link added to Location. (${BUILD_TAG} | ${BUILD_MARKER})`
       });
       event.completed();
     });

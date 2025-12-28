@@ -4,7 +4,7 @@
   <Version>1.4.0.0</Version>
   <ProviderName>CodeBlu Development</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Add Teams Meeting to Location (v1.2.1)"/>
+  <DisplayName DefaultValue="Add Teams Meeting to Location (v1.4.0.0)"/>
   <Description DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>
   <IconUrl DefaultValue="https://mvteamsmeetinglink.netlify.app/assets/codeblu-teams-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://mvteamsmeetinglink.netlify.app/assets/codeblu-teams-128.png"/>

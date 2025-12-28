@@ -78,7 +78,7 @@
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="Teams Tools"/>
-        <bt:String id="ActionButton.Label" DefaultValue="Add Teams Meeting to Location (v1.2.1)"/>
+        <bt:String id="ActionButton.Label" DefaultValue="Add Teams Meeting to Location (v1.3.1)"/>
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="ActionButton.Tooltip" DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>

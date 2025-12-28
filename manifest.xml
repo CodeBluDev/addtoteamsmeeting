@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xsi:type="MailApp">
   <Id>3ea7824c-6d87-41aa-9007-b9adfb5eba24</Id>
-  <Version>1.4.0.0</Version>
+  <Version>1.4.1.0</Version>
   <ProviderName>CodeBlu Development</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Add Teams Meeting to Location (v1.4.0.0)"/>
+  <DisplayName DefaultValue="Add Teams Meeting to Location (v1.4.1.0)"/>
   <Description DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>
   <IconUrl DefaultValue="https://mvteamsmeetinglink.netlify.app/assets/codeblu-teams-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://mvteamsmeetinglink.netlify.app/assets/codeblu-teams-128.png"/>
@@ -79,7 +79,7 @@
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="Teams Tools"/>
-        <bt:String id="ActionButton.Label" DefaultValue="Add Teams Meeting to Location (v1.3.1)"/>
+        <bt:String id="ActionButton.Label" DefaultValue="Add Teams Meeting to Location (v1.4.0.0)"/>
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="ActionButton.Tooltip" DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>

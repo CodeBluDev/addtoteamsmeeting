@@ -58,7 +58,14 @@ function addTeamsLinkToLocation(event) {
     }
 
     logDebug("Teams link extracted", { teamsLink });
-    findCalendarItemByTeamsLink(teamsLink, (findError, calendarItem) => {
+    runEwsHealthCheck((ewsOk, ewsMessage) => {
+      if (!ewsOk) {
+        notifyError(item, `EWS health check failed: ${ewsMessage}`);
+        event.completed();
+        return;
+      }
+
+      findCalendarItemByTeamsLink(teamsLink, (findError, calendarItem) => {
       logDebug("Find by link", { error: Boolean(findError), found: Boolean(calendarItem) });
       if (findError) {
         notifyError(item, `EWS error: ${formatEwsError(findError)}`);
@@ -117,6 +124,7 @@ function addTeamsLinkToLocation(event) {
             event.completed();
           });
         });
+      });
       });
     });
   });
@@ -297,6 +305,47 @@ function findCalendarItemByTeamsLink(teamsLink, callback) {
 
     const calendarItem = parseFirstCalendarItem(result.value);
     callback(null, calendarItem);
+  });
+}
+
+function runEwsHealthCheck(callback) {
+  const request = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:t="${EWS_TYPES_NS}"
+               xmlns:m="${EWS_MESSAGES_NS}">
+  <soap:Header>
+    <t:RequestServerVersion Version="Exchange2013" />
+  </soap:Header>
+  <soap:Body>
+    <m:GetFolder>
+      <m:FolderShape>
+        <t:BaseShape>IdOnly</t:BaseShape>
+      </m:FolderShape>
+      <m:FolderIds>
+        <t:DistinguishedFolderId Id="calendar" />
+      </m:FolderIds>
+    </m:GetFolder>
+  </soap:Body>
+</soap:Envelope>`;
+
+  Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
+    logDebug("EWS health check response", {
+      status: result.status,
+      error: result.error ? { name: result.error.name, message: result.error.message } : null
+    });
+
+    if (result.status !== Office.AsyncResultStatus.Succeeded) {
+      callback(false, formatEwsError(result.error));
+      return;
+    }
+
+    const xmlDoc = parseXml(result.value);
+    if (!xmlDoc || !isEwsResponseSuccess(xmlDoc)) {
+      callback(false, "EWS GetFolder failed.");
+      return;
+    }
+
+    callback(true, "OK");
   });
 }
 

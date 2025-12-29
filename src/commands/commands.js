@@ -13,6 +13,7 @@ const BUILD_TAG = "v1.7.1";
 const BUILD_MARKER = "2024-09-18T14:35Z";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
+const DEBUG_LOGS = true;
 
 /**
  * Shows a notification when the add-in command is executed.
@@ -20,9 +21,11 @@ const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types"
  */
 function addTeamsLinkToLocation(event) {
   const item = Office.context.mailbox.item;
+  logDebug("Command invoked", { itemId: item.itemId, itemType: item.itemType });
 
   // Read the message body as HTML
   item.body.getAsync(Office.CoercionType.Html, (bodyResult) => {
+    logDebug("Body getAsync result", { status: bodyResult.status });
     if (bodyResult.status !== Office.AsyncResultStatus.Succeeded) {
       item.notificationMessages.replaceAsync("error", {
         type: Office.MailboxEnums.ItemNotificationMessageType.ErrorMessage,
@@ -37,6 +40,7 @@ function addTeamsLinkToLocation(event) {
     // Extract the Teams meeting link
     const teamsRegex = /https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s"<]+/i;
     const match = bodyHtml.match(teamsRegex);
+    logDebug("Teams link match", { found: Boolean(match) });
 
     if (!match) {
       item.notificationMessages.replaceAsync("noLink", {
@@ -48,7 +52,9 @@ function addTeamsLinkToLocation(event) {
     }
 
     const teamsLink = match[0];
+    logDebug("Teams link extracted", { teamsLink });
     findCalendarItemByTeamsLink(teamsLink, (findError, calendarItem) => {
+      logDebug("Find by link", { error: Boolean(findError), found: Boolean(calendarItem) });
       if (findError) {
         notifyError(item, "Unable to search calendar items.");
         event.completed();
@@ -68,6 +74,7 @@ function addTeamsLinkToLocation(event) {
       }
 
       getMessageTimeRange(item, (timeError, timeRange) => {
+        logDebug("Message time range", { error: Boolean(timeError), hasRange: Boolean(timeRange) });
         if (timeError || !timeRange) {
           notifyInfo(item, "No matching calendar event found.");
           event.completed();
@@ -75,6 +82,10 @@ function addTeamsLinkToLocation(event) {
         }
 
         findCalendarItemByTimeRange(timeRange, (timeFindError, timeCalendarItem) => {
+          logDebug("Find by time", {
+            error: Boolean(timeFindError),
+            found: Boolean(timeCalendarItem)
+          });
           if (timeFindError) {
             notifyError(item, "Unable to search calendar items.");
             event.completed();
@@ -154,6 +165,7 @@ function getMessageTimeRange(item, callback) {
 
 function findCalendarItemByTeamsLink(teamsLink, callback) {
   const escapedLink = escapeXml(teamsLink);
+  logDebug("EWS FindItem by link request prepared");
   const request = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
                xmlns:t="${EWS_TYPES_NS}"
@@ -180,6 +192,7 @@ function findCalendarItemByTeamsLink(teamsLink, callback) {
 </soap:Envelope>`;
 
   Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
+    logDebug("EWS FindItem by link response", { status: result.status });
     if (result.status !== Office.AsyncResultStatus.Succeeded) {
       callback(result.error, null);
       return;
@@ -193,6 +206,7 @@ function findCalendarItemByTeamsLink(teamsLink, callback) {
 function findCalendarItemByTimeRange(timeRange, callback) {
   const startIso = timeRange.start.toISOString();
   const endIso = timeRange.end.toISOString();
+  logDebug("EWS FindItem by time request prepared", { startIso, endIso });
   const request = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
                xmlns:t="${EWS_TYPES_NS}"
@@ -218,6 +232,7 @@ function findCalendarItemByTimeRange(timeRange, callback) {
 </soap:Envelope>`;
 
   Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
+    logDebug("EWS FindItem by time response", { status: result.status });
     if (result.status !== Office.AsyncResultStatus.Succeeded) {
       callback(result.error, null);
       return;
@@ -230,6 +245,7 @@ function findCalendarItemByTimeRange(timeRange, callback) {
 
 function updateCalendarItemLocation(calendarItem, location, callback) {
   const escapedLocation = escapeXml(location);
+  logDebug("EWS UpdateItem request prepared", { itemId: calendarItem.id });
   const request = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
                xmlns:t="${EWS_TYPES_NS}"
@@ -257,6 +273,7 @@ function updateCalendarItemLocation(calendarItem, location, callback) {
 </soap:Envelope>`;
 
   Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
+    logDebug("EWS UpdateItem response", { status: result.status });
     if (result.status !== Office.AsyncResultStatus.Succeeded) {
       callback(result.error);
       return;
@@ -351,6 +368,20 @@ function escapeXml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+function logDebug(message, data) {
+  if (!DEBUG_LOGS) {
+    return;
+  }
+
+  if (data) {
+    // eslint-disable-next-line no-console
+    console.log(`[AddTeamsLink] ${message}`, data);
+  } else {
+    // eslint-disable-next-line no-console
+    console.log(`[AddTeamsLink] ${message}`);
+  }
 }
 
 // Register the function with Office.

@@ -14,7 +14,7 @@ const BUILD_MARKER = "2024-09-18T14:35Z";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
-const NOTIFICATION_ICON_URL = "https://mvteamsmeetinglink.netlify.app/assets/codeblu-teams-16.png?v=1.7.1";
+const NOTIFICATION_ICON_ID = "Icon.16x16";
 const DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/create-event.html?v=1.7.1";
 
 /**
@@ -40,17 +40,15 @@ function addTeamsLinkToLocation(event) {
     const bodyHtml = bodyResult.value;
 
     // Extract the Teams meeting link
-    const teamsRegex = /https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s"<]+/i;
-    const match = bodyHtml.match(teamsRegex);
-    logDebug("Teams link match", { found: Boolean(match) });
+    const teamsLink = extractTeamsLink(bodyHtml);
+    logDebug("Teams link match", { found: Boolean(teamsLink) });
 
-    if (!match) {
+    if (!teamsLink) {
       notifyInfo(item, "No Microsoft Teams meeting link found in this invite.");
       event.completed();
       return;
     }
 
-    const teamsLink = match[0];
     logDebug("Teams link extracted", { teamsLink });
     findCalendarItemByTeamsLink(teamsLink, (findError, calendarItem) => {
       logDebug("Find by link", { error: Boolean(findError), found: Boolean(calendarItem) });
@@ -117,7 +115,7 @@ function addTeamsLinkToLocation(event) {
 function notifySuccess(item) {
   item.notificationMessages.replaceAsync("success", {
     type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
-    icon: NOTIFICATION_ICON_URL,
+    icon: NOTIFICATION_ICON_ID,
     message: `Teams meeting link added to Location. (${BUILD_TAG} | ${BUILD_MARKER})`
   });
 }
@@ -132,7 +130,7 @@ function notifyError(item, message) {
 function notifyInfo(item, message) {
   item.notificationMessages.replaceAsync("info", {
     type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
-    icon: NOTIFICATION_ICON_URL,
+    icon: NOTIFICATION_ICON_ID,
     message
   });
 }
@@ -448,6 +446,48 @@ function escapeXml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+function extractTeamsLink(bodyHtml) {
+  const teamsRegex = /https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s"<]+/i;
+  const safeLinksRegex = /https:\/\/[^\/]+\.safelinks\.protection\.outlook\.com\/[^\s"<]+/i;
+  const akaTeamsRegex = /https:\/\/aka\.ms\/[^\s"<]*teams[^\s"<]*/i;
+
+  const urls = bodyHtml.match(/https?:\/\/[^\s"'<>]+/gi) || [];
+  for (let i = 0; i < urls.length; i += 1) {
+    const rawUrl = urls[i];
+    const cleanedUrl = rawUrl.replace(/&amp;/g, "&");
+
+    if (teamsRegex.test(cleanedUrl)) {
+      return cleanedUrl;
+    }
+
+    if (safeLinksRegex.test(cleanedUrl)) {
+      const extracted = extractSafeLinkTarget(cleanedUrl);
+      if (extracted && teamsRegex.test(extracted)) {
+        return extracted;
+      }
+    }
+
+    if (akaTeamsRegex.test(cleanedUrl)) {
+      return cleanedUrl;
+    }
+  }
+
+  return null;
+}
+
+function extractSafeLinkTarget(safeLinkUrl) {
+  try {
+    const url = new URL(safeLinkUrl);
+    const target = url.searchParams.get("url");
+    if (!target) {
+      return null;
+    }
+    return decodeURIComponent(target);
+  } catch (error) {
+    return null;
+  }
 }
 
 function logDebug(message, data) {

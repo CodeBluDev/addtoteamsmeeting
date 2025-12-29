@@ -3,7 +3,7 @@
  * See LICENSE in the project root for license information.
  */
 
-/* global Office */
+/* global Office, OfficeRuntime */
 
 Office.onReady(() => {
   // If needed, Office.js is ready to be called.
@@ -16,6 +16,8 @@ const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types"
 const DEBUG_LOGS = true;
 const NOTIFICATION_ICON_ID = "Icon.16x16";
 const DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/create-event.html?v=1.7.1";
+const GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
+const GRAPH_SEARCH_DAYS = 90;
 
 /**
  * Shows a notification when the add-in command is executed.
@@ -50,65 +52,37 @@ function addTeamsLinkToLocation(event) {
     }
 
     logDebug("Teams link extracted", { teamsLink });
-    findCalendarItemByTeamsLink(teamsLink, (findError, calendarItem) => {
-      logDebug("Find by link", { error: Boolean(findError), found: Boolean(calendarItem) });
-      if (findError) {
+    const meetingId = extractMeetingId(bodyHtml, teamsLink);
+    logDebug("Meeting id extracted", { meetingId });
+
+    findCalendarEventByGraph(teamsLink, meetingId)
+      .then((eventId) => {
+        if (!eventId) {
+          notifyInfo(item, "No matching calendar event found. Opening event dialog.");
+          openCreateEventDialog(item, teamsLink);
+          event.completed();
+          return null;
+        }
+
+        return updateCalendarEventLocationGraph(eventId, teamsLink)
+          .then(() => {
+            notifySuccess(item);
+            event.completed();
+            return null;
+          })
+          .catch((updateError) => {
+            logDebug("Graph update failed", { message: updateError.message });
+            notifyError(item, "Unable to update the calendar location.");
+            event.completed();
+            return null;
+          });
+      })
+      .catch((error) => {
+        logDebug("Graph search failed", { message: error.message });
         notifyInfo(item, "Opening event dialog (calendar search blocked).");
         openCreateEventDialog(item, teamsLink);
         event.completed();
-        return;
-      }
-
-      if (calendarItem) {
-        updateCalendarItemLocation(calendarItem, teamsLink, (updateError) => {
-          if (updateError) {
-            notifyError(item, "Unable to update the calendar location.");
-          } else {
-            notifySuccess(item);
-          }
-          event.completed();
-        });
-        return;
-      }
-
-      getMessageTimeRange(item, (timeError, timeRange) => {
-        logDebug("Message time range", { error: Boolean(timeError), hasRange: Boolean(timeRange) });
-        if (timeError || !timeRange) {
-          notifyInfo(item, "No matching calendar event found.");
-          event.completed();
-          return;
-        }
-
-        findCalendarItemByTimeRange(timeRange, (timeFindError, timeCalendarItem) => {
-          logDebug("Find by time", {
-            error: Boolean(timeFindError),
-            found: Boolean(timeCalendarItem)
-          });
-          if (timeFindError) {
-            notifyInfo(item, "Opening event dialog (calendar search blocked).");
-            openCreateEventDialog(item, teamsLink);
-            event.completed();
-            return;
-          }
-
-          if (!timeCalendarItem) {
-            notifyInfo(item, "No matching calendar event found. Opening event dialog.");
-            openCreateEventDialog(item, teamsLink);
-            event.completed();
-            return;
-          }
-
-          updateCalendarItemLocation(timeCalendarItem, teamsLink, (updateError) => {
-            if (updateError) {
-              notifyError(item, "Unable to update the calendar location.");
-            } else {
-              notifySuccess(item);
-            }
-            event.completed();
-          });
-        });
       });
-    });
   });
 }
 
@@ -448,6 +422,113 @@ function escapeXml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+function extractMeetingId(bodyHtml, teamsLink) {
+  const combined = `${bodyHtml} ${teamsLink || ""}`;
+  const decoded = decodeHtmlEntities(decodeLink(combined));
+  const match = decoded.match(/19:meeting_[^"'\\s<>]+/i);
+  if (match) {
+    return match[0];
+  }
+
+  const encodedMatch = combined.match(/19%3Ameeting_[^"'\\s<>%]+/i);
+  if (encodedMatch) {
+    return decodeLink(encodedMatch[0]);
+  }
+
+  return null;
+}
+
+async function findCalendarEventByGraph(teamsLink, meetingId) {
+  const token = await getGraphAccessToken();
+  const start = new Date();
+  const end = new Date(start.getTime() + GRAPH_SEARCH_DAYS * 24 * 60 * 60 * 1000);
+  let url = `${GRAPH_BASE_URL}/me/calendarView?startDateTime=${encodeURIComponent(
+    start.toISOString()
+  )}&endDateTime=${encodeURIComponent(end.toISOString())}` +
+    "&$select=id,subject,body,location,onlineMeetingUrl,start,end";
+
+  while (url) {
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Prefer: 'outlook.body-content-type="text"'
+      }
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Graph calendarView failed: ${response.status} ${text}`);
+    }
+
+    const data = await response.json();
+    const items = data.value || [];
+
+    for (let i = 0; i < items.length; i += 1) {
+      if (eventMatchesTeams(items[i], teamsLink, meetingId)) {
+        return items[i].id;
+      }
+    }
+
+    url = data["@odata.nextLink"] || null;
+  }
+
+  return null;
+}
+
+async function updateCalendarEventLocationGraph(eventId, teamsLink) {
+  const token = await getGraphAccessToken();
+  const response = await fetch(`${GRAPH_BASE_URL}/me/events/${eventId}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      location: {
+        displayName: teamsLink
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Graph update failed: ${response.status} ${text}`);
+  }
+}
+
+async function getGraphAccessToken() {
+  if (!OfficeRuntime || !OfficeRuntime.auth || !OfficeRuntime.auth.getAccessToken) {
+    throw new Error("OfficeRuntime auth is not available.");
+  }
+
+  const token = await OfficeRuntime.auth.getAccessToken({
+    allowSignInPrompt: true,
+    allowConsentPrompt: true,
+    forMSGraphAccess: true
+  });
+  logDebug("Graph token acquired");
+  return token;
+}
+
+function eventMatchesTeams(event, teamsLink, meetingId) {
+  const bodyText = event.body && event.body.content ? event.body.content : "";
+  const onlineUrl = event.onlineMeetingUrl || "";
+
+  if (meetingId) {
+    if (bodyText.includes(meetingId) || onlineUrl.includes(meetingId)) {
+      return true;
+    }
+  }
+
+  if (teamsLink) {
+    if (bodyText.includes(teamsLink) || onlineUrl.includes(teamsLink)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function extractTeamsLink(bodyHtml) {

@@ -116,6 +116,7 @@ function notifySuccess(item) {
   item.notificationMessages.replaceAsync("success", {
     type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
     icon: NOTIFICATION_ICON_ID,
+    persistent: false,
     message: `Teams meeting link added to Location. (${BUILD_TAG} | ${BUILD_MARKER})`
   });
 }
@@ -131,6 +132,7 @@ function notifyInfo(item, message) {
   item.notificationMessages.replaceAsync("info", {
     type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
     icon: NOTIFICATION_ICON_ID,
+    persistent: false,
     message
   });
 }
@@ -452,6 +454,10 @@ function extractTeamsLink(bodyHtml) {
   const teamsRegex = /https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s"<]+/i;
   const safeLinksRegex = /https:\/\/[^\/]+\.safelinks\.protection\.outlook\.com\/[^\s"<]+/i;
   const akaTeamsRegex = /https:\/\/aka\.ms\/[^\s"<]*teams[^\s"<]*/i;
+  const directLink = findTeamsLinkInText(bodyHtml);
+  if (directLink) {
+    return directLink;
+  }
 
   const urls = bodyHtml.match(/https?:\/\/[^\s"'<>]+/gi) || [];
   for (let i = 0; i < urls.length; i += 1) {
@@ -459,13 +465,16 @@ function extractTeamsLink(bodyHtml) {
     const cleanedUrl = rawUrl.replace(/&amp;/g, "&");
 
     if (teamsRegex.test(cleanedUrl)) {
-      return cleanedUrl;
+      return decodeLink(cleanedUrl);
     }
 
     if (safeLinksRegex.test(cleanedUrl)) {
       const extracted = extractSafeLinkTarget(cleanedUrl);
-      if (extracted && teamsRegex.test(extracted)) {
-        return extracted;
+      if (extracted) {
+        const decoded = decodeLink(extracted);
+        if (teamsRegex.test(decoded)) {
+          return decoded;
+        }
       }
     }
 
@@ -475,6 +484,50 @@ function extractTeamsLink(bodyHtml) {
   }
 
   return null;
+}
+
+function findTeamsLinkInText(text) {
+  const candidates = [];
+  const rawMatches = text.match(/https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s"'<>]+/gi);
+  if (rawMatches) {
+    candidates.push(...rawMatches);
+  }
+
+  const decodedHtml = decodeHtmlEntities(text);
+  const decodedMatches = decodedHtml.match(/https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s"'<>]+/gi);
+  if (decodedMatches) {
+    candidates.push(...decodedMatches);
+  }
+
+  for (let i = 0; i < candidates.length; i += 1) {
+    const cleaned = decodeLink(candidates[i]);
+    if (cleaned) {
+      return cleaned;
+    }
+  }
+
+  return null;
+}
+
+function decodeLink(url) {
+  const cleaned = url.replace(/&amp;/g, "&");
+  if (/%[0-9A-Fa-f]{2}/.test(cleaned)) {
+    try {
+      return decodeURIComponent(cleaned);
+    } catch (error) {
+      return cleaned;
+    }
+  }
+  return cleaned;
+}
+
+function decodeHtmlEntities(text) {
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'");
 }
 
 function extractSafeLinkTarget(safeLinkUrl) {

@@ -59,6 +59,15 @@ Office.onReady(() => {
   if (status) {
     status.textContent = "JS loaded";
   }
+  // eslint-disable-next-line no-console
+  console.log("[Dialog] JS loaded");
+
+  if (!Office.context || !Office.context.ui || !Office.context.ui.addHandlerAsync) {
+    if (status) {
+      status.textContent = "Office.js not available (open in Outlook dialog)";
+    }
+    return;
+  }
 
   initializeDefaults();
   document.getElementById("createBtn").addEventListener("click", sendCreate);

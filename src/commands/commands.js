@@ -9,7 +9,7 @@ Office.onReady(() => {
   // If needed, Office.js is ready to be called.
 });
 
-const BUILD_TAG = "v1.5.1";
+const BUILD_TAG = "v1.6.1";
 const BUILD_MARKER = "2024-09-18T14:35Z";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";

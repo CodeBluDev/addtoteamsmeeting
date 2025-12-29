@@ -192,7 +192,10 @@ function findCalendarItemByTeamsLink(teamsLink, callback) {
 </soap:Envelope>`;
 
   Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
-    logDebug("EWS FindItem by link response", { status: result.status });
+    logDebug("EWS FindItem by link response", {
+      status: result.status,
+      error: result.error ? { name: result.error.name, message: result.error.message } : null
+    });
     if (result.status !== Office.AsyncResultStatus.Succeeded) {
       callback(result.error, null);
       return;
@@ -232,7 +235,10 @@ function findCalendarItemByTimeRange(timeRange, callback) {
 </soap:Envelope>`;
 
   Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
-    logDebug("EWS FindItem by time response", { status: result.status });
+    logDebug("EWS FindItem by time response", {
+      status: result.status,
+      error: result.error ? { name: result.error.name, message: result.error.message } : null
+    });
     if (result.status !== Office.AsyncResultStatus.Succeeded) {
       callback(result.error, null);
       return;
@@ -273,7 +279,10 @@ function updateCalendarItemLocation(calendarItem, location, callback) {
 </soap:Envelope>`;
 
   Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
-    logDebug("EWS UpdateItem response", { status: result.status });
+    logDebug("EWS UpdateItem response", {
+      status: result.status,
+      error: result.error ? { name: result.error.name, message: result.error.message } : null
+    });
     if (result.status !== Office.AsyncResultStatus.Succeeded) {
       callback(result.error);
       return;

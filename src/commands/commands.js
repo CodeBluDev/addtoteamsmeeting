@@ -58,37 +58,65 @@ function addTeamsLinkToLocation(event) {
     }
 
     logDebug("Teams link extracted", { teamsLink });
-    const meetingId = extractMeetingId(bodyHtml, teamsLink);
-    logDebug("Meeting id extracted", { meetingId });
-
-    findCalendarEventByGraph(teamsLink, meetingId)
-      .then((eventId) => {
-        if (!eventId) {
-          notifyInfo(item, "No matching calendar event found. Opening event dialog.");
-          openCreateEventDialog(item, teamsLink);
-          event.completed();
-          return null;
-        }
-
-        return updateCalendarEventLocationGraph(eventId, teamsLink)
-          .then(() => {
-            notifySuccess(item);
-            event.completed();
-            return null;
-          })
-          .catch((updateError) => {
-            logDebug("Graph update failed", { message: updateError.message });
-            notifyError(item, "Unable to update the calendar location.");
-            event.completed();
-            return null;
-          });
-      })
-      .catch((error) => {
-        logDebug("Graph search failed", { message: error.message });
+    findCalendarItemByTeamsLink(teamsLink, (findError, calendarItem) => {
+      logDebug("Find by link", { error: Boolean(findError), found: Boolean(calendarItem) });
+      if (findError) {
         notifyInfo(item, "Opening event dialog (calendar search blocked).");
         openCreateEventDialog(item, teamsLink);
         event.completed();
+        return;
+      }
+
+      if (calendarItem) {
+        updateCalendarItemLocation(calendarItem, teamsLink, (updateError) => {
+          if (updateError) {
+            notifyError(item, "Unable to update the calendar location.");
+          } else {
+            notifySuccess(item);
+          }
+          event.completed();
+        });
+        return;
+      }
+
+      getMessageTimeRange(item, (timeError, timeRange) => {
+        logDebug("Message time range", { error: Boolean(timeError), hasRange: Boolean(timeRange) });
+        if (timeError || !timeRange) {
+          notifyInfo(item, "No matching calendar event found.");
+          event.completed();
+          return;
+        }
+
+        findCalendarItemByTimeRange(timeRange, (timeFindError, timeCalendarItem) => {
+          logDebug("Find by time", {
+            error: Boolean(timeFindError),
+            found: Boolean(timeCalendarItem)
+          });
+          if (timeFindError) {
+            notifyInfo(item, "Opening event dialog (calendar search blocked).");
+            openCreateEventDialog(item, teamsLink);
+            event.completed();
+            return;
+          }
+
+          if (!timeCalendarItem) {
+            notifyInfo(item, "No matching calendar event found. Opening event dialog.");
+            openCreateEventDialog(item, teamsLink);
+            event.completed();
+            return;
+          }
+
+          updateCalendarItemLocation(timeCalendarItem, teamsLink, (updateError) => {
+            if (updateError) {
+              notifyError(item, "Unable to update the calendar location.");
+            } else {
+              notifySuccess(item);
+            }
+            event.completed();
+          });
+        });
       });
+    });
   });
 }
 
@@ -568,7 +596,9 @@ function getGraphAccessTokenViaDialog() {
       { height: 60, width: 40, displayInIframe: true },
       (result) => {
         if (result.status !== Office.AsyncResultStatus.Succeeded) {
-          reject(new Error("Unable to open auth dialog."));
+          const message = result.error && result.error.message ? result.error.message : "Unknown dialog error.";
+          logDebug("Auth dialog open failed", { code: result.error && result.error.code, message });
+          reject(new Error(`Unable to open auth dialog: ${message}`));
           return;
         }
 
@@ -580,6 +610,17 @@ function getGraphAccessTokenViaDialog() {
           } catch (parseError) {
             dialog.close();
             reject(new Error("Invalid auth dialog response."));
+            return;
+          }
+
+          if (data.type === "ready") {
+            dialog.messageChild(
+              JSON.stringify({
+                clientId: AAD_CLIENT_ID,
+                authority: AAD_AUTHORITY,
+                scopes: GRAPH_SCOPES
+              })
+            );
             return;
           }
 
@@ -596,14 +637,6 @@ function getGraphAccessTokenViaDialog() {
         dialog.addEventHandler(Office.EventType.DialogEventReceived, () => {
           reject(new Error("Auth dialog closed."));
         });
-
-        dialog.messageChild(
-          JSON.stringify({
-            clientId: AAD_CLIENT_ID,
-            authority: AAD_AUTHORITY,
-            scopes: GRAPH_SCOPES
-          })
-        );
       }
     );
   });

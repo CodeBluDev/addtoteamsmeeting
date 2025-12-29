@@ -77,4 +77,6 @@ Office.onReady(() => {
       }
     }
   );
+
+  sendMessage("ready", {});
 });

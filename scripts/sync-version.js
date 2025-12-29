@@ -14,7 +14,7 @@ function writeFile(filePath, content) {
   fs.writeFileSync(filePath, content, "utf8");
 }
 
-function updateCommands(version, buildMarker, cacheBuster) {
+function updateCommands(version, buildMarker, cacheBuster, baseUrl) {
   let content = fs.readFileSync(commandsPath, "utf8");
   content = content.replace(
     /const BUILD_TAG = ".*?";/g,
@@ -25,19 +25,20 @@ function updateCommands(version, buildMarker, cacheBuster) {
     `const BUILD_MARKER = "${buildMarker}";`
   );
   if (cacheBuster) {
+    const base = baseUrl || "https://mvteamsmeetinglink.netlify.app";
     content = content.replace(
       /const DIALOG_URL = ".*?";/g,
-      `const DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/create-event.html?v=${cacheBuster}";`
+      `const DIALOG_URL = "${base}/create-event.html?v=${cacheBuster}";`
     );
     content = content.replace(
       /const AUTH_DIALOG_URL = ".*?";/g,
-      `const AUTH_DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/auth.html?v=${cacheBuster}";`
+      `const AUTH_DIALOG_URL = "${base}/auth.html?v=${cacheBuster}";`
     );
   }
   writeFile(commandsPath, content);
 }
 
-function updateManifest(version, cacheBuster, manifestVersion) {
+function updateManifest(version, cacheBuster, manifestVersion, baseUrl) {
   let content = fs.readFileSync(manifestPath, "utf8");
   const labelText = `Add Teams Meeting to Location (${version})`;
 
@@ -57,21 +58,28 @@ function updateManifest(version, cacheBuster, manifestVersion) {
     );
   }
 
-  content = content.replace(
-    /(https:\/\/mvteamsmeetinglink\.netlify\.app\/[^"]+?)(\?v=[^"]*)?"/g,
-    `$1?v=${cacheBuster}"`
-  );
+  if (baseUrl && cacheBuster) {
+    const escapedBase = baseUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const baseRegex = new RegExp(`(${escapedBase}\\/[^"]+?)(\\?v=[^"]*)?"`, "g");
+    content = content.replace(baseRegex, `$1?v=${cacheBuster}"`);
+  }
 
   writeFile(manifestPath, content);
 }
 
 function main() {
   const versionInfo = readJson(versionPath);
-  updateCommands(versionInfo.version, versionInfo.buildMarker, versionInfo.cacheBuster);
+  updateCommands(
+    versionInfo.version,
+    versionInfo.buildMarker,
+    versionInfo.cacheBuster,
+    versionInfo.baseUrl
+  );
   updateManifest(
     versionInfo.version,
     versionInfo.cacheBuster,
-    versionInfo.manifestVersion
+    versionInfo.manifestVersion,
+    versionInfo.baseUrl
   );
   console.log(`Synced version ${versionInfo.version}.`);
 }

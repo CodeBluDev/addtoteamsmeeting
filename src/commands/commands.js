@@ -15,13 +15,13 @@ const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/mes
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
 const NOTIFICATION_ICON_ID = "Icon.16x16";
-const DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/create-event.html?v=1.8.2";
+const DIALOG_URL = "https://codebludev.github.io/addtoteamsmeeting/create-event.html?v=1.8.2";
 const GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
 const GRAPH_SEARCH_DAYS = 90;
 const AAD_CLIENT_ID = "226fcb0c-fa77-48bb-a20e-70a75ce176fd";
 const AAD_AUTHORITY = "https://login.microsoftonline.com/organizations";
 const GRAPH_SCOPES = ["https://graph.microsoft.com/Calendars.ReadWrite"];
-const AUTH_DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/auth.html?v=1.8.2";
+const AUTH_DIALOG_URL = "https://codebludev.github.io/addtoteamsmeeting/auth.html?v=1.8.2";
 let cachedGraphToken = null;
 let cachedGraphTokenExpiresAt = 0;
 

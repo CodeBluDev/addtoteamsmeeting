@@ -14,6 +14,7 @@ const BUILD_MARKER = "2024-09-18T14:35Z";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
+const NOTIFICATION_ICON_URL = "https://mvteamsmeetinglink.netlify.app/assets/codeblu-teams-16.png?v=1.7.1";
 
 /**
  * Shows a notification when the add-in command is executed.
@@ -43,10 +44,7 @@ function addTeamsLinkToLocation(event) {
     logDebug("Teams link match", { found: Boolean(match) });
 
     if (!match) {
-      item.notificationMessages.replaceAsync("noLink", {
-        type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
-        message: "No Microsoft Teams meeting link found in this invite."
-      });
+      notifyInfo(item, "No Microsoft Teams meeting link found in this invite.");
       event.completed();
       return;
     }
@@ -115,6 +113,7 @@ function addTeamsLinkToLocation(event) {
 function notifySuccess(item) {
   item.notificationMessages.replaceAsync("success", {
     type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
+    icon: NOTIFICATION_ICON_URL,
     message: `Teams meeting link added to Location. (${BUILD_TAG} | ${BUILD_MARKER})`
   });
 }
@@ -129,6 +128,7 @@ function notifyError(item, message) {
 function notifyInfo(item, message) {
   item.notificationMessages.replaceAsync("info", {
     type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
+    icon: NOTIFICATION_ICON_URL,
     message
   });
 }

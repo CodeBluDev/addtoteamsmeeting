@@ -14,7 +14,7 @@ function writeFile(filePath, content) {
   fs.writeFileSync(filePath, content, "utf8");
 }
 
-function updateCommands(version, buildMarker) {
+function updateCommands(version, buildMarker, cacheBuster) {
   let content = fs.readFileSync(commandsPath, "utf8");
   content = content.replace(
     /const BUILD_TAG = ".*?";/g,
@@ -24,6 +24,12 @@ function updateCommands(version, buildMarker) {
     /const BUILD_MARKER = ".*?";/g,
     `const BUILD_MARKER = "${buildMarker}";`
   );
+  if (cacheBuster) {
+    content = content.replace(
+      /const NOTIFICATION_ICON_URL = ".*?";/g,
+      `const NOTIFICATION_ICON_URL = "https://mvteamsmeetinglink.netlify.app/assets/codeblu-teams-16.png?v=${cacheBuster}";`
+    );
+  }
   writeFile(commandsPath, content);
 }
 
@@ -57,7 +63,7 @@ function updateManifest(version, cacheBuster, manifestVersion) {
 
 function main() {
   const versionInfo = readJson(versionPath);
-  updateCommands(versionInfo.version, versionInfo.buildMarker);
+  updateCommands(versionInfo.version, versionInfo.buildMarker, versionInfo.cacheBuster);
   updateManifest(
     versionInfo.version,
     versionInfo.cacheBuster,

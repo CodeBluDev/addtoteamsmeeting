@@ -50,7 +50,10 @@ Office.onReady(() => {
       const scopes = config.scopes || ["https://graph.microsoft.com/Calendars.ReadWrite"];
 
       try {
-        const loginResult = await app.loginPopup({ scopes });
+        const loginResult = await app.loginPopup({
+          scopes,
+          prompt: "login"
+        });
         const account = loginResult.account;
         const tokenResult = await app.acquireTokenSilent({
           scopes,
@@ -61,7 +64,10 @@ Office.onReady(() => {
       } catch (error) {
         setStatus(`Auth error: ${error.message || "login failed"}`);
         try {
-          const fallback = await app.acquireTokenPopup({ scopes });
+          const fallback = await app.acquireTokenPopup({
+            scopes,
+            prompt: "login"
+          });
           setStatus("Token acquired.");
           sendMessage("token", { accessToken: fallback.accessToken });
         } catch (popupError) {

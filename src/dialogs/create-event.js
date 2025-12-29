@@ -55,6 +55,11 @@ function sendCancel() {
 }
 
 Office.onReady(() => {
+  const status = document.getElementById("jsStatus");
+  if (status) {
+    status.textContent = "JS loaded";
+  }
+
   initializeDefaults();
   document.getElementById("createBtn").addEventListener("click", sendCreate);
   document.getElementById("cancelBtn").addEventListener("click", sendCancel);

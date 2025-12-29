@@ -61,6 +61,7 @@ function addTeamsLinkToLocation(event) {
     findCalendarItemByTeamsLink(teamsLink, (findError, calendarItem) => {
       logDebug("Find by link", { error: Boolean(findError), found: Boolean(calendarItem) });
       if (findError) {
+        notifyError(item, `EWS error: ${formatEwsError(findError)}`);
         notifyInfo(item, "Opening event dialog (calendar search blocked).");
         openCreateEventDialog(item, teamsLink);
         event.completed();
@@ -93,6 +94,7 @@ function addTeamsLinkToLocation(event) {
             found: Boolean(timeCalendarItem)
           });
           if (timeFindError) {
+            notifyError(item, `EWS error: ${formatEwsError(timeFindError)}`);
             notifyInfo(item, "Opening event dialog (calendar search blocked).");
             openCreateEventDialog(item, teamsLink);
             event.completed();
@@ -143,6 +145,18 @@ function notifyInfo(item, message) {
     persistent: false,
     message
   });
+}
+
+function getUtcWindowStart() {
+  const now = new Date();
+  now.setDate(now.getDate() - 7);
+  return now.toISOString();
+}
+
+function getUtcWindowEnd() {
+  const now = new Date();
+  now.setDate(now.getDate() + 90);
+  return now.toISOString();
 }
 
 function openCreateEventDialog(item, teamsLink) {
@@ -257,6 +271,7 @@ function findCalendarItemByTeamsLink(teamsLink, callback) {
       <m:ItemShape>
         <t:BaseShape>IdOnly</t:BaseShape>
       </m:ItemShape>
+      <m:CalendarView StartDate="${getUtcWindowStart()}" EndDate="${getUtcWindowEnd()}" />
       <m:Restriction>
         <t:Contains ContainmentMode="Substring" ContainmentComparison="IgnoreCase">
           <t:FieldURI FieldURI="item:Body" />
@@ -733,6 +748,16 @@ function extractSafeLinkTarget(safeLinkUrl) {
   } catch (error) {
     return null;
   }
+}
+
+function formatEwsError(error) {
+  if (!error) {
+    return "Unknown error";
+  }
+
+  const name = error.name || "EWS error";
+  const message = error.message || "No message";
+  return `${name}: ${message}`;
 }
 
 function logDebug(message, data) {

@@ -18,6 +18,12 @@ const NOTIFICATION_ICON_ID = "Icon.16x16";
 const DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/create-event.html?v=1.7.1";
 const GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
 const GRAPH_SEARCH_DAYS = 90;
+const AAD_CLIENT_ID = "226fcb0c-fa77-48bb-a20e-70a75ce176fd";
+const AAD_AUTHORITY = "https://login.microsoftonline.com/organizations";
+const GRAPH_SCOPES = ["https://graph.microsoft.com/Calendars.ReadWrite"];
+const AUTH_DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/auth.html?v=1.7.1";
+let cachedGraphToken = null;
+let cachedGraphTokenExpiresAt = 0;
 
 /**
  * Shows a notification when the add-in command is executed.
@@ -425,9 +431,16 @@ function escapeXml(value) {
 }
 
 function extractMeetingId(bodyHtml, teamsLink) {
+  if (teamsLink) {
+    const linkMatch = teamsLink.match(/19:meeting_[^/?"'\\s<>]+/i);
+    if (linkMatch) {
+      return linkMatch[0];
+    }
+  }
+
   const combined = `${bodyHtml} ${teamsLink || ""}`;
   const decoded = decodeHtmlEntities(decodeLink(combined));
-  const match = decoded.match(/19:meeting_[^"'\\s<>]+/i);
+  const match = decoded.match(/19:meeting_[^/?"'\\s<>]+/i);
   if (match) {
     return match[0];
   }
@@ -499,16 +512,28 @@ async function updateCalendarEventLocationGraph(eventId, teamsLink) {
 }
 
 async function getGraphAccessToken() {
-  if (!OfficeRuntime || !OfficeRuntime.auth || !OfficeRuntime.auth.getAccessToken) {
-    throw new Error("OfficeRuntime auth is not available.");
+  if (cachedGraphToken && Date.now() < cachedGraphTokenExpiresAt) {
+    return cachedGraphToken;
   }
 
-  const token = await OfficeRuntime.auth.getAccessToken({
-    allowSignInPrompt: true,
-    allowConsentPrompt: true,
-    forMSGraphAccess: true
-  });
-  logDebug("Graph token acquired");
+  if (OfficeRuntime && OfficeRuntime.auth && OfficeRuntime.auth.getAccessToken) {
+    try {
+      const token = await OfficeRuntime.auth.getAccessToken({
+        allowSignInPrompt: true,
+        allowConsentPrompt: true,
+        forMSGraphAccess: true
+      });
+      logDebug("Graph token acquired (OfficeRuntime)");
+      cacheGraphToken(token, 50);
+      return token;
+    } catch (error) {
+      logDebug("OfficeRuntime auth failed", { message: error.message });
+    }
+  }
+
+  const token = await getGraphAccessTokenViaDialog();
+  logDebug("Graph token acquired (dialog)");
+  cacheGraphToken(token, 45);
   return token;
 }
 
@@ -529,6 +554,59 @@ function eventMatchesTeams(event, teamsLink, meetingId) {
   }
 
   return false;
+}
+
+function cacheGraphToken(token, minutes) {
+  cachedGraphToken = token;
+  cachedGraphTokenExpiresAt = Date.now() + minutes * 60 * 1000;
+}
+
+function getGraphAccessTokenViaDialog() {
+  return new Promise((resolve, reject) => {
+    Office.context.ui.displayDialogAsync(
+      AUTH_DIALOG_URL,
+      { height: 60, width: 40, displayInIframe: true },
+      (result) => {
+        if (result.status !== Office.AsyncResultStatus.Succeeded) {
+          reject(new Error("Unable to open auth dialog."));
+          return;
+        }
+
+        const dialog = result.value;
+        dialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
+          let data;
+          try {
+            data = JSON.parse(arg.message);
+          } catch (parseError) {
+            dialog.close();
+            reject(new Error("Invalid auth dialog response."));
+            return;
+          }
+
+          if (data.type === "token" && data.accessToken) {
+            dialog.close();
+            resolve(data.accessToken);
+            return;
+          }
+
+          dialog.close();
+          reject(new Error(data.message || "Auth failed."));
+        });
+
+        dialog.addEventHandler(Office.EventType.DialogEventReceived, () => {
+          reject(new Error("Auth dialog closed."));
+        });
+
+        dialog.messageChild(
+          JSON.stringify({
+            clientId: AAD_CLIENT_ID,
+            authority: AAD_AUTHORITY,
+            scopes: GRAPH_SCOPES
+          })
+        );
+      }
+    );
+  });
 }
 
 function extractTeamsLink(bodyHtml) {

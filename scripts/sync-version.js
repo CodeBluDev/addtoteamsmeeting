@@ -29,6 +29,10 @@ function updateCommands(version, buildMarker, cacheBuster) {
       /const DIALOG_URL = ".*?";/g,
       `const DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/create-event.html?v=${cacheBuster}";`
     );
+    content = content.replace(
+      /const AUTH_DIALOG_URL = ".*?";/g,
+      `const AUTH_DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/auth.html?v=${cacheBuster}";`
+    );
   }
   writeFile(commandsPath, content);
 }

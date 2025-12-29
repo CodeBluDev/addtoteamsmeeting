@@ -22,6 +22,7 @@ module.exports = async (env, options) => {
       taskpane: ["./src/taskpane/taskpane.js", "./src/taskpane/taskpane.html"],
       commands: "./src/commands/commands.js",
       createEventDialog: "./src/dialogs/create-event.js",
+      authDialog: "./src/dialogs/auth.js",
     },
     output: {
       path: path.resolve(__dirname, "dist"),
@@ -88,6 +89,11 @@ module.exports = async (env, options) => {
         filename: "create-event.html",
         template: "./src/dialogs/create-event.html",
         chunks: ["polyfill", "createEventDialog"],
+      }),
+      new HtmlWebpackPlugin({
+        filename: "auth.html",
+        template: "./src/dialogs/auth.html",
+        chunks: ["polyfill", "authDialog"],
       }),
     ],
     devServer: {

@@ -29,6 +29,10 @@ function updateCommands(version, buildMarker, cacheBuster) {
       /const NOTIFICATION_ICON_URL = ".*?";/g,
       `const NOTIFICATION_ICON_URL = "https://mvteamsmeetinglink.netlify.app/assets/codeblu-teams-16.png?v=${cacheBuster}";`
     );
+    content = content.replace(
+      /const DIALOG_URL = ".*?";/g,
+      `const DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/create-event.html?v=${cacheBuster}";`
+    );
   }
   writeFile(commandsPath, content);
 }

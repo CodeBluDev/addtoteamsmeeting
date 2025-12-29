@@ -21,6 +21,7 @@ module.exports = async (env, options) => {
       polyfill: ["core-js/stable", "regenerator-runtime/runtime"],
       taskpane: ["./src/taskpane/taskpane.js", "./src/taskpane/taskpane.html"],
       commands: "./src/commands/commands.js",
+      createEventDialog: "./src/dialogs/create-event.js",
     },
     output: {
       path: path.resolve(__dirname, "dist"),
@@ -82,6 +83,11 @@ module.exports = async (env, options) => {
         filename: "commands.html",
         template: "./src/commands/commands.html",
         chunks: ["polyfill", "commands"],
+      }),
+      new HtmlWebpackPlugin({
+        filename: "create-event.html",
+        template: "./src/dialogs/create-event.html",
+        chunks: ["polyfill", "createEventDialog"],
       }),
     ],
     devServer: {

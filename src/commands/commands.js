@@ -15,6 +15,7 @@ const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/mes
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
 const NOTIFICATION_ICON_URL = "https://mvteamsmeetinglink.netlify.app/assets/codeblu-teams-16.png?v=1.7.1";
+const DIALOG_URL = "https://mvteamsmeetinglink.netlify.app/create-event.html?v=1.7.1";
 
 /**
  * Shows a notification when the add-in command is executed.
@@ -54,7 +55,8 @@ function addTeamsLinkToLocation(event) {
     findCalendarItemByTeamsLink(teamsLink, (findError, calendarItem) => {
       logDebug("Find by link", { error: Boolean(findError), found: Boolean(calendarItem) });
       if (findError) {
-        notifyError(item, "Unable to search calendar items.");
+        notifyInfo(item, "Opening event dialog (calendar search blocked).");
+        openCreateEventDialog(item, teamsLink);
         event.completed();
         return;
       }
@@ -85,13 +87,15 @@ function addTeamsLinkToLocation(event) {
             found: Boolean(timeCalendarItem)
           });
           if (timeFindError) {
-            notifyError(item, "Unable to search calendar items.");
+            notifyInfo(item, "Opening event dialog (calendar search blocked).");
+            openCreateEventDialog(item, teamsLink);
             event.completed();
             return;
           }
 
           if (!timeCalendarItem) {
-            notifyInfo(item, "No matching calendar event found.");
+            notifyInfo(item, "No matching calendar event found. Opening event dialog.");
+            openCreateEventDialog(item, teamsLink);
             event.completed();
             return;
           }
@@ -131,6 +135,73 @@ function notifyInfo(item, message) {
     icon: NOTIFICATION_ICON_URL,
     message
   });
+}
+
+function openCreateEventDialog(item, teamsLink) {
+  const subject = item.subject || "Teams meeting";
+
+  Office.context.ui.displayDialogAsync(
+    DIALOG_URL,
+    { height: 55, width: 35, displayInIframe: true },
+    (result) => {
+      if (result.status !== Office.AsyncResultStatus.Succeeded) {
+        notifyError(item, "Unable to open the event dialog.");
+        return;
+      }
+
+      const dialog = result.value;
+      dialog.addEventHandler(Office.EventType.DialogMessageReceived, (arg) => {
+        let data;
+        try {
+          data = JSON.parse(arg.message);
+        } catch (parseError) {
+          notifyError(item, "Invalid response from dialog.");
+          dialog.close();
+          return;
+        }
+
+        if (data.action === "cancel") {
+          dialog.close();
+          return;
+        }
+
+        if (data.action !== "create") {
+          notifyError(item, "Unknown dialog response.");
+          dialog.close();
+          return;
+        }
+
+        const start = new Date(data.start);
+        const end = new Date(data.end);
+        if (Number.isNaN(start.valueOf()) || Number.isNaN(end.valueOf())) {
+          notifyError(item, "Invalid date/time from dialog.");
+          dialog.close();
+          return;
+        }
+
+        Office.context.mailbox.displayNewAppointmentForm({
+          subject: data.subject || subject,
+          location: teamsLink,
+          start,
+          end
+        });
+
+        dialog.close();
+        notifySuccess(item);
+      });
+
+      dialog.addEventHandler(Office.EventType.DialogEventReceived, () => {
+        notifyInfo(item, "Event dialog closed.");
+      });
+
+      dialog.messageChild(
+        JSON.stringify({
+          subject,
+          teamsLink
+        })
+      );
+    }
+  );
 }
 
 function getMessageTimeRange(item, callback) {

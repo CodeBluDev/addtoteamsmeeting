@@ -36,13 +36,6 @@
     <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read"/>
   </Rule>
   <DisableEntityHighlighting>false</DisableEntityHighlighting>
-  <WebApplicationInfo>
-    <Id>226fcb0c-fa77-48bb-a20e-70a75ce176fd</Id>
-    <Resource>api://226fcb0c-fa77-48bb-a20e-70a75ce176fd</Resource>
-    <Scopes>
-      <Scope>Calendars.ReadWrite</Scope>
-    </Scopes>
-  </WebApplicationInfo>
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
     <Requirements>
       <bt:Sets DefaultMinVersion="1.3">

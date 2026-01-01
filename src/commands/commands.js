@@ -9,10 +9,10 @@ Office.onReady(() => {
   // If needed, Office.js is ready to be called.
 });
 
-const BUILD_TAG = "v1.8.20";
-const BUILD_MARKER = "2026-01-01T16:41Z";
+const BUILD_TAG = "v1.8.21";
+const BUILD_MARKER = "2026-01-01T16:49Z";
 const DEFAULT_BASE_URL = "https://codebludev.github.io/addtoteamsmeeting";
-const CACHE_BUSTER = "1.8.20";
+const CACHE_BUSTER = "1.8.21";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;

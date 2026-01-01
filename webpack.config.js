@@ -5,7 +5,7 @@ const devCerts = require("office-addin-dev-certs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
-const urlDev = "https://localhost:3000/";
+const urlDev = "https://127.0.0.1:3000/";
 const urlProd = "https://YOUR_VERCEL_DOMAIN.vercel.app/";
 
 async function getHttpsOptions() {

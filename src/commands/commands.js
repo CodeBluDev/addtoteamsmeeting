@@ -15,13 +15,13 @@ const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/mes
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
 const NOTIFICATION_ICON_ID = "Icon.16x16";
-const DIALOG_URL = "https://codebludev.github.io/addtoteamsmeeting/create-event.html?v=1.8.2";
+const DIALOG_URL = "https://127.0.0.1:3000/create-event.html?v=1.8.2";
 const GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
 const GRAPH_SEARCH_DAYS = 90;
 const AAD_CLIENT_ID = "226fcb0c-fa77-48bb-a20e-70a75ce176fd";
 const AAD_AUTHORITY = "https://login.microsoftonline.com/organizations";
 const GRAPH_SCOPES = ["https://graph.microsoft.com/Calendars.ReadWrite"];
-const AUTH_DIALOG_URL = "https://codebludev.github.io/addtoteamsmeeting/auth.html?v=1.8.2";
+const AUTH_DIALOG_URL = "https://127.0.0.1:3000/auth.html?v=1.8.2";
 let cachedGraphToken = null;
 let cachedGraphTokenExpiresAt = 0;
 
@@ -555,6 +555,14 @@ async function findCalendarEventByGraph(teamsLink, meetingId) {
     "&$select=id,subject,body,location,onlineMeetingUrl,start,end";
 
   while (url) {
+    logDebug("Graph calendarView request", {
+      method: "GET",
+      url,
+      headers: {
+        Authorization: exposeAuthHeader(token),
+        Prefer: 'outlook.body-content-type="text"'
+      }
+    });
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -562,6 +570,7 @@ async function findCalendarEventByGraph(teamsLink, meetingId) {
       }
     });
 
+    await logGraphResponse("calendarView", response);
     if (!response.ok) {
       const text = await response.text();
       throw new Error(`Graph calendarView failed: ${response.status} ${text}`);
@@ -584,19 +593,30 @@ async function findCalendarEventByGraph(teamsLink, meetingId) {
 
 async function updateCalendarEventLocationGraph(eventId, teamsLink) {
   const token = await getGraphAccessToken();
+  const body = {
+    location: {
+      displayName: teamsLink
+    }
+  };
+  logDebug("Graph update request", {
+    method: "PATCH",
+    url: `${GRAPH_BASE_URL}/me/events/${eventId}`,
+    headers: {
+      Authorization: exposeAuthHeader(token),
+      "Content-Type": "application/json"
+    },
+    body
+  });
   const response = await fetch(`${GRAPH_BASE_URL}/me/events/${eventId}`, {
     method: "PATCH",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      location: {
-        displayName: teamsLink
-      }
-    })
+    body: JSON.stringify(body)
   });
 
+  await logGraphResponse("updateEvent", response);
   if (!response.ok) {
     const text = await response.text();
     throw new Error(`Graph update failed: ${response.status} ${text}`);
@@ -821,6 +841,28 @@ function logDebug(message, data) {
     // eslint-disable-next-line no-console
     console.log(`[AddTeamsLink] ${message}`);
   }
+}
+
+async function logGraphResponse(label, response) {
+  try {
+    const text = await response.clone().text();
+    logDebug("Graph response", {
+      label,
+      status: response.status,
+      ok: response.ok,
+      url: response.url,
+      text
+    });
+  } catch (error) {
+    logDebug("Graph response read failed", { label, message: error.message });
+  }
+}
+
+function exposeAuthHeader(token) {
+  if (!token) {
+    return "Bearer [missing]";
+  }
+  return `Bearer ${token}`;
 }
 
 // Register the function with Office.

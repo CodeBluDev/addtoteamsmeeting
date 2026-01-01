@@ -1,7 +1,8 @@
 {
-  "version": "v1.8.4",
-  "buildMarker": "2026-01-01T14:28Z",
-  "cacheBuster": "1.8.4",
-  "manifestVersion": "1.8.4.0",
-  "baseUrl": "https://codebludev.github.io/addtoteamsmeeting"
+  "version": "v1.8.17",
+  "buildMarker": "2026-01-01T16:09Z",
+  "cacheBuster": "1.8.17",
+  "manifestVersion": "1.8.17.0",
+  "baseUrl": "https://codebludev.github.io/addtoteamsmeeting",
+  "devBaseUrl": "https://initiative-providence-hay-directories.trycloudflare.com"
 }

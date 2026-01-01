@@ -9,21 +9,24 @@ Office.onReady(() => {
   // If needed, Office.js is ready to be called.
 });
 
-const BUILD_TAG = "v1.8.4";
-const BUILD_MARKER = "2026-01-01T14:28Z";
+const BUILD_TAG = "v1.8.17";
+const BUILD_MARKER = "2026-01-01T16:09Z";
+const DEFAULT_BASE_URL = "https://codebludev.github.io/addtoteamsmeeting";
+const CACHE_BUSTER = "1.8.17";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
 const NOTIFICATION_ICON_ID = "Icon.16x16";
-const DIALOG_URL = "https://80e5e54149bb.ngrok-free.app/create-event.html?v=1.8.4";
+const DIALOG_URL = getDialogUrl("create-event.html");
 const GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
-const GRAPH_SEARCH_DAYS = 90;
+const GRAPH_SEARCH_DAYS = 365;
 const AAD_CLIENT_ID = "226fcb0c-fa77-48bb-a20e-70a75ce176fd";
 const AAD_AUTHORITY = "https://login.microsoftonline.com/organizations";
 const GRAPH_SCOPES = ["https://graph.microsoft.com/Calendars.ReadWrite"];
-const AUTH_DIALOG_URL = "https://80e5e54149bb.ngrok-free.app/auth.html?v=1.8.4";
+const AUTH_DIALOG_URL = getDialogUrl("auth.html");
 let cachedGraphToken = null;
 let cachedGraphTokenExpiresAt = 0;
+const GRAPH_TOKEN_STORAGE_KEY = "addTeamsGraphToken";
 
 /**
  * Shows a notification when the add-in command is executed.
@@ -57,76 +60,27 @@ function addTeamsLinkToLocation(event) {
       return;
     }
 
-    logDebug("Teams link extracted", { teamsLink });
-    runEwsHealthCheck((ewsOk, ewsMessage) => {
-      if (!ewsOk) {
-        notifyError(item, `EWS health check failed: ${ewsMessage}`);
-        event.completed();
-        return;
-      }
+    const meetingId = extractMeetingId(bodyHtml, teamsLink);
+    logDebug("Teams meeting id extracted", { meetingId });
 
-      findCalendarItemByTeamsLink(teamsLink, (findError, calendarItem) => {
-      logDebug("Find by link", { error: Boolean(findError), found: Boolean(calendarItem) });
-      if (findError) {
-        notifyError(item, `EWS error: ${formatEwsError(findError)}`);
-        notifyInfo(item, "Opening event dialog (calendar search blocked).");
-        openCreateEventDialog(item, teamsLink);
-        event.completed();
-        return;
-      }
-
-      if (calendarItem) {
-        updateCalendarItemLocation(calendarItem, teamsLink, (updateError) => {
-          if (updateError) {
-            notifyError(item, "Unable to update the calendar location.");
-          } else {
-            notifySuccess(item);
-          }
-          event.completed();
-        });
-        return;
-      }
-
-      getMessageTimeRange(item, (timeError, timeRange) => {
-        logDebug("Message time range", { error: Boolean(timeError), hasRange: Boolean(timeRange) });
-        if (timeError || !timeRange) {
-          notifyInfo(item, "No matching calendar event found.");
-          event.completed();
+    (async () => {
+      try {
+        const eventId = await findCalendarEventByGraph(teamsLink, meetingId);
+        if (!eventId) {
+          notifyInfo(item, "No matching calendar event found. Opening event dialog.");
+          openCreateEventDialog(item, teamsLink);
           return;
         }
 
-        findCalendarItemByTimeRange(timeRange, (timeFindError, timeCalendarItem) => {
-          logDebug("Find by time", {
-            error: Boolean(timeFindError),
-            found: Boolean(timeCalendarItem)
-          });
-          if (timeFindError) {
-            notifyError(item, `EWS error: ${formatEwsError(timeFindError)}`);
-            notifyInfo(item, "Opening event dialog (calendar search blocked).");
-            openCreateEventDialog(item, teamsLink);
-            event.completed();
-            return;
-          }
-
-          if (!timeCalendarItem) {
-            notifyInfo(item, "No matching calendar event found. Opening event dialog.");
-            openCreateEventDialog(item, teamsLink);
-            event.completed();
-            return;
-          }
-
-          updateCalendarItemLocation(timeCalendarItem, teamsLink, (updateError) => {
-            if (updateError) {
-              notifyError(item, "Unable to update the calendar location.");
-            } else {
-              notifySuccess(item);
-            }
-            event.completed();
-          });
-        });
-      });
-      });
-    });
+        await updateCalendarEventLocationGraph(eventId, teamsLink);
+        notifySuccess(item);
+      } catch (error) {
+        logDebug("Graph update failed", { message: error.message });
+        notifyError(item, "Unable to update the calendar location via Microsoft Graph.");
+      } finally {
+        event.completed();
+      }
+    })();
   });
 }
 
@@ -307,10 +261,7 @@ function findCalendarItemByTeamsLink(teamsLink, callback) {
 </soap:Envelope>`;
 
   Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
-    logDebug("EWS FindItem by link response", {
-      status: result.status,
-      error: result.error ? { name: result.error.name, message: result.error.message } : null
-    });
+    logEwsResult("FindItem by link", result);
     if (result.status !== Office.AsyncResultStatus.Succeeded) {
       callback(result.error, null);
       return;
@@ -322,6 +273,7 @@ function findCalendarItemByTeamsLink(teamsLink, callback) {
 }
 
 function runEwsHealthCheck(callback) {
+  logDebug("EWS health check request prepared");
   const request = `<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
                xmlns:t="${EWS_TYPES_NS}"
@@ -342,10 +294,7 @@ function runEwsHealthCheck(callback) {
 </soap:Envelope>`;
 
   Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
-    logDebug("EWS health check response", {
-      status: result.status,
-      error: result.error ? { name: result.error.name, message: result.error.message } : null
-    });
+    logEwsResult("health check", result);
 
     if (result.status !== Office.AsyncResultStatus.Succeeded) {
       callback(false, formatEwsError(result.error));
@@ -391,10 +340,7 @@ function findCalendarItemByTimeRange(timeRange, callback) {
 </soap:Envelope>`;
 
   Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
-    logDebug("EWS FindItem by time response", {
-      status: result.status,
-      error: result.error ? { name: result.error.name, message: result.error.message } : null
-    });
+    logEwsResult("FindItem by time", result);
     if (result.status !== Office.AsyncResultStatus.Succeeded) {
       callback(result.error, null);
       return;
@@ -435,10 +381,7 @@ function updateCalendarItemLocation(calendarItem, location, callback) {
 </soap:Envelope>`;
 
   Office.context.mailbox.makeEwsRequestAsync(request, (result) => {
-    logDebug("EWS UpdateItem response", {
-      status: result.status,
-      error: result.error ? { name: result.error.name, message: result.error.message } : null
-    });
+    logEwsResult("UpdateItem", result);
     if (result.status !== Office.AsyncResultStatus.Succeeded) {
       callback(result.error);
       return;
@@ -591,6 +534,10 @@ async function findCalendarEventByGraph(teamsLink, meetingId) {
 
     const data = await response.json();
     const items = data.value || [];
+    logDebug("Graph calendarView items", {
+      count: items.length,
+      sample: items.slice(0, 5).map((item) => summarizeGraphItem(item, teamsLink, meetingId))
+    });
 
     for (let i = 0; i < items.length; i += 1) {
       if (eventMatchesTeams(items[i], teamsLink, meetingId)) {
@@ -641,6 +588,14 @@ async function getGraphAccessToken() {
     return cachedGraphToken;
   }
 
+  const stored = readStoredGraphToken();
+  if (stored) {
+    cachedGraphToken = stored.token;
+    cachedGraphTokenExpiresAt = stored.expiresAt;
+    logDebug("Graph token loaded from storage");
+    return stored.token;
+  }
+
   if (OfficeRuntime && OfficeRuntime.auth && OfficeRuntime.auth.getAccessToken) {
     try {
       const token = await OfficeRuntime.auth.getAccessToken({
@@ -659,21 +614,35 @@ async function getGraphAccessToken() {
   const token = await getGraphAccessTokenViaDialog();
   logDebug("Graph token acquired (dialog)");
   cacheGraphToken(token, 45);
+  storeGraphToken(token);
   return token;
 }
 
 function eventMatchesTeams(event, teamsLink, meetingId) {
-  const bodyText = event.body && event.body.content ? event.body.content : "";
-  const onlineUrl = event.onlineMeetingUrl || "";
+  const bodyText = normalizeText(event.body && event.body.content ? event.body.content : "");
+  const onlineUrl = normalizeText(event.onlineMeetingUrl || "");
+  const locationText = normalizeText(
+    event.location && event.location.displayName ? event.location.displayName : ""
+  );
+  const normalizedMeetingId = normalizeText(meetingId || "");
+  const normalizedTeamsLink = normalizeText(teamsLink || "");
 
-  if (meetingId) {
-    if (bodyText.includes(meetingId) || onlineUrl.includes(meetingId)) {
+  if (normalizedMeetingId) {
+    if (
+      bodyText.includes(normalizedMeetingId) ||
+      onlineUrl.includes(normalizedMeetingId) ||
+      locationText.includes(normalizedMeetingId)
+    ) {
       return true;
     }
   }
 
-  if (teamsLink) {
-    if (bodyText.includes(teamsLink) || onlineUrl.includes(teamsLink)) {
+  if (normalizedTeamsLink) {
+    if (
+      bodyText.includes(normalizedTeamsLink) ||
+      onlineUrl.includes(normalizedTeamsLink) ||
+      locationText.includes(normalizedTeamsLink)
+    ) {
       return true;
     }
   }
@@ -686,11 +655,62 @@ function cacheGraphToken(token, minutes) {
   cachedGraphTokenExpiresAt = Date.now() + minutes * 60 * 1000;
 }
 
+function storeGraphToken(token) {
+  const expiresAt = decodeJwtExpiresAt(token);
+  if (!expiresAt) {
+    return;
+  }
+  try {
+    localStorage.setItem(
+      GRAPH_TOKEN_STORAGE_KEY,
+      JSON.stringify({ token, expiresAt })
+    );
+  } catch (error) {
+    // Ignore storage errors.
+  }
+}
+
+function readStoredGraphToken() {
+  try {
+    const raw = localStorage.getItem(GRAPH_TOKEN_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.token || !parsed.expiresAt) {
+      return null;
+    }
+    if (Date.now() >= parsed.expiresAt - 60 * 1000) {
+      localStorage.removeItem(GRAPH_TOKEN_STORAGE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch (error) {
+    return null;
+  }
+}
+
+function decodeJwtExpiresAt(token) {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) {
+      return null;
+    }
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (!payload || !payload.exp) {
+      return null;
+    }
+    return payload.exp * 1000;
+  } catch (error) {
+    return null;
+  }
+}
+
 function getGraphAccessTokenViaDialog() {
   return new Promise((resolve, reject) => {
     Office.context.ui.displayDialogAsync(
       AUTH_DIALOG_URL,
-      { height: 60, width: 40, displayInIframe: true },
+      { height: 60, width: 40, displayInIframe: false },
       (result) => {
         if (result.status !== Office.AsyncResultStatus.Succeeded) {
           const message = result.error && result.error.message ? result.error.message : "Unknown dialog error.";
@@ -707,6 +727,15 @@ function getGraphAccessTokenViaDialog() {
           } catch (parseError) {
             dialog.close();
             reject(new Error("Invalid auth dialog response."));
+            return;
+          }
+
+          if (data.type === "log") {
+            logDebug("Auth dialog log", {
+              level: data.level,
+              message: data.message,
+              data: data.data || null
+            });
             return;
           }
 
@@ -731,7 +760,8 @@ function getGraphAccessTokenViaDialog() {
           reject(new Error(data.message || "Auth failed."));
         });
 
-        dialog.addEventHandler(Office.EventType.DialogEventReceived, () => {
+        dialog.addEventHandler(Office.EventType.DialogEventReceived, (arg) => {
+          logDebug("Auth dialog event", { error: arg && arg.error ? arg.error : null });
           reject(new Error("Auth dialog closed."));
         });
       }
@@ -819,6 +849,44 @@ function decodeHtmlEntities(text) {
     .replace(/&#39;/g, "'");
 }
 
+function normalizeText(text) {
+  if (!text) {
+    return "";
+  }
+  const decoded = decodeHtmlEntities(String(text));
+  const cleaned = decodeLink(decoded);
+  return cleaned.toLowerCase();
+}
+
+function summarizeGraphItem(item, teamsLink, meetingId) {
+  const bodyText = normalizeText(item.body && item.body.content ? item.body.content : "");
+  const onlineUrl = normalizeText(item.onlineMeetingUrl || "");
+  const locationText = normalizeText(
+    item.location && item.location.displayName ? item.location.displayName : ""
+  );
+  const normalizedMeetingId = normalizeText(meetingId || "");
+  const normalizedTeamsLink = normalizeText(teamsLink || "");
+  return {
+    id: item.id || null,
+    subject: item.subject || null,
+    start: item.start && item.start.dateTime ? item.start.dateTime : null,
+    onlineMeetingUrl: item.onlineMeetingUrl || null,
+    location: item.location && item.location.displayName ? item.location.displayName : null,
+    hasMeetingId: Boolean(
+      normalizedMeetingId &&
+        (bodyText.includes(normalizedMeetingId) ||
+          onlineUrl.includes(normalizedMeetingId) ||
+          locationText.includes(normalizedMeetingId))
+    ),
+    hasTeamsLink: Boolean(
+      normalizedTeamsLink &&
+        (bodyText.includes(normalizedTeamsLink) ||
+          onlineUrl.includes(normalizedTeamsLink) ||
+          locationText.includes(normalizedTeamsLink))
+    )
+  };
+}
+
 function extractSafeLinkTarget(safeLinkUrl) {
   try {
     const url = new URL(safeLinkUrl);
@@ -830,6 +898,18 @@ function extractSafeLinkTarget(safeLinkUrl) {
   } catch (error) {
     return null;
   }
+}
+
+function getBaseUrl() {
+  if (typeof window !== "undefined" && window.location && window.location.origin) {
+    return window.location.origin;
+  }
+  return DEFAULT_BASE_URL;
+}
+
+function getDialogUrl(path) {
+  const baseUrl = getBaseUrl();
+  return `${baseUrl}/${path}?v=${CACHE_BUSTER}`;
 }
 
 function formatEwsError(error) {
@@ -869,6 +949,27 @@ async function logGraphResponse(label, response) {
   } catch (error) {
     logDebug("Graph response read failed", { label, message: error.message });
   }
+}
+
+function logEwsResult(label, result) {
+  const errorString = result.error ? formatEwsError(result.error) : null;
+  const error = result.error
+    ? {
+        name: result.error.name,
+        message: result.error.message,
+        code: result.error.code,
+        debugInfo: result.error.debugInfo || null
+      }
+    : null;
+  const value = typeof result.value === "string" ? result.value : "";
+  logDebug(`EWS ${label} response`, {
+    status: result.status,
+    errorString,
+    errorJson: result.error ? JSON.stringify(result.error) : null,
+    error,
+    valueLength: value.length,
+    valuePreview: value ? value.slice(0, 2000) : null
+  });
 }
 
 function exposeAuthHeader(token) {

@@ -26,14 +26,15 @@ function updateCommands(version, buildMarker, cacheBuster, baseUrl) {
     `const BUILD_MARKER = "${buildMarker}";`
   );
   if (cacheBuster) {
-    const base = baseUrl || "https://mvteamsmeetinglink.netlify.app";
     content = content.replace(
-      /const DIALOG_URL = ".*?";/g,
-      `const DIALOG_URL = "${base}/create-event.html?v=${cacheBuster}";`
+      /const CACHE_BUSTER = ".*?";/g,
+      `const CACHE_BUSTER = "${cacheBuster}";`
     );
+  }
+  if (baseUrl) {
     content = content.replace(
-      /const AUTH_DIALOG_URL = ".*?";/g,
-      `const AUTH_DIALOG_URL = "${base}/auth.html?v=${cacheBuster}";`
+      /const DEFAULT_BASE_URL = ".*?";/g,
+      `const DEFAULT_BASE_URL = "${baseUrl}";`
     );
   }
   writeFile(commandsPath, content);
@@ -88,7 +89,7 @@ function main() {
     versionInfo.version,
     versionInfo.cacheBuster,
     versionInfo.manifestVersion,
-    "https://127.0.0.1:3000"
+    versionInfo.devBaseUrl || "https://127.0.0.1:3000"
   );
   console.log(`Synced version ${versionInfo.version}.`);
 }

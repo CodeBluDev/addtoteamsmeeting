@@ -61,6 +61,7 @@ function updateManifest(filePath, version, cacheBuster, manifestVersion, baseUrl
   }
 
   if (baseUrl && cacheBuster) {
+    content = content.replace(/https:\/\/127\.0\.0\.1:3000/g, baseUrl);
     const escapedBase = baseUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const baseRegex = new RegExp(`(${escapedBase}\\/[^"]+?)(\\?v=[^"]*)?"`, "g");
     content = content.replace(baseRegex, `$1?v=${cacheBuster}"`);

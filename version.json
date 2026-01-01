@@ -1,7 +1,7 @@
 {
-  "version": "v1.8.2",
-  "buildMarker": "2024-09-18T16:40Z",
-  "cacheBuster": "1.8.2",
-  "manifestVersion": "1.8.2.0",
+  "version": "v1.8.4",
+  "buildMarker": "2026-01-01T14:28Z",
+  "cacheBuster": "1.8.4",
+  "manifestVersion": "1.8.4.0",
   "baseUrl": "https://codebludev.github.io/addtoteamsmeeting"
 }

@@ -1,3 +1,129 @@
-/*! For license information please see authDialog.js.LICENSE.txt */
-!function(){function t(e){return t="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},t(e)}function e(){var t,r,o="function"==typeof Symbol?Symbol:{},i=o.iterator||"@@iterator",c=o.toStringTag||"@@toStringTag";function a(e,o,i,c){var a=o&&o.prototype instanceof f?o:f,s=Object.create(a.prototype);return n(s,"_invoke",function(e,n,o){var i,c,a,f=0,s=o||[],l=!1,p={p:0,n:0,v:t,a:y,f:y.bind(t,4),d:function(e,n){return i=e,c=0,a=t,p.n=n,u}};function y(e,n){for(c=e,a=n,r=0;!l&&f&&!o&&r<s.length;r++){var o,i=s[r],y=p.p,b=i[2];e>3?(o=b===n)&&(a=i[(c=i[4])?5:(c=3,3)],i[4]=i[5]=t):i[0]<=y&&((o=e<2&&y<i[1])?(c=0,p.v=n,p.n=i[1]):y<b&&(o=e<3||i[0]>n||n>b)&&(i[4]=e,i[5]=n,p.n=b,c=0))}if(o||e>1)return u;throw l=!0,n}return function(o,s,b){if(f>1)throw TypeError("Generator is already running");for(l&&1===s&&y(s,b),c=s,a=b;(r=c<2?t:a)||!l;){i||(c?c<3?(c>1&&(p.n=-1),y(c,a)):p.n=a:p.v=a);try{if(f=2,i){if(c||(o="next"),r=i[o]){if(!(r=r.call(i,a)))throw TypeError("iterator result is not an object");if(!r.done)return r;a=r.value,c<2&&(c=0)}else 1===c&&(r=i.return)&&r.call(i),c<2&&(a=TypeError("The iterator does not provide a '"+o+"' method"),c=1);i=t}else if((r=(l=p.n<0)?a:e.call(n,p))!==u)break}catch(e){i=t,c=1,a=e}finally{f=1}}return{value:r,done:l}}}(e,i,c),!0),s}var u={};function f(){}function s(){}function l(){}r=Object.getPrototypeOf;var p=[][i]?r(r([][i]())):(n(r={},i,function(){return this}),r),y=l.prototype=f.prototype=Object.create(p);function b(t){return Object.setPrototypeOf?Object.setPrototypeOf(t,l):(t.__proto__=l,n(t,c,"GeneratorFunction")),t.prototype=Object.create(y),t}return s.prototype=l,n(y,"constructor",l),n(l,"constructor",s),s.displayName="GeneratorFunction",n(l,c,"GeneratorFunction"),n(y),n(y,c,"Generator"),n(y,i,function(){return this}),n(y,"toString",function(){return"[object Generator]"}),(e=function(){return{w:a,m:b}})()}function n(t,e,r,o){var i=Object.defineProperty;try{i({},"",{})}catch(t){i=0}n=function(t,e,r,o){function c(e,r){n(t,e,function(t){return this._invoke(e,r,t)})}e?i?i(t,e,{value:r,enumerable:!o,configurable:!o,writable:!o}):t[e]=r:(c("next",0),c("throw",1),c("return",2))},n(t,e,r,o)}function r(t,e,n,r,o,i,c){try{var a=t[i](c),u=a.value}catch(t){return void n(t)}a.done?e(u):Promise.resolve(u).then(r,o)}function o(t,e){var n=Object.keys(t);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(t);e&&(r=r.filter(function(e){return Object.getOwnPropertyDescriptor(t,e).enumerable})),n.push.apply(n,r)}return n}function i(e,n,r){return(n=function(e){var n=function(e){if("object"!=t(e)||!e)return e;var n=e[Symbol.toPrimitive];if(void 0!==n){var r=n.call(e,"string");if("object"!=t(r))return r;throw new TypeError("@@toPrimitive must return a primitive value.")}return String(e)}(e);return"symbol"==t(n)?n:n+""}(n))in e?Object.defineProperty(e,n,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[n]=r,e}function c(t,e){Office.context.ui.messageParent(JSON.stringify(function(t){for(var e=1;e<arguments.length;e++){var n=null!=arguments[e]?arguments[e]:{};e%2?o(Object(n),!0).forEach(function(e){i(t,e,n[e])}):Object.getOwnPropertyDescriptors?Object.defineProperties(t,Object.getOwnPropertyDescriptors(n)):o(Object(n)).forEach(function(e){Object.defineProperty(t,e,Object.getOwnPropertyDescriptor(n,e))})}return t}({type:t},e)))}function a(t){var e=document.getElementById("authStatus");e&&(e.textContent=t)}function u(t){try{return JSON.parse(t)}catch(t){return null}}Office.onReady(function(){a("Auth dialog ready"),console.log("[AuthDialog] ready"),Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived,function(){var t,n=(t=e().m(function t(n){var r,o,i,f,s,l,p,y,b,g;return e().w(function(t){for(;;)switch(t.p=t.n){case 0:if((r=u(n.message))&&r.clientId){t.n=1;break}return a("Missing auth config."),c("error",{message:"Missing auth configuration."}),t.a(2);case 1:return a("Starting sign-in…"),o={auth:{clientId:r.clientId,authority:r.authority||"https://login.microsoftonline.com/organizations",redirectUri:window.location.origin+window.location.pathname},cache:{cacheLocation:"sessionStorage"}},i=new msal.PublicClientApplication(o),f=r.scopes||["https://graph.microsoft.com/Calendars.ReadWrite"],t.p=2,t.n=3,i.loginPopup({scopes:f,prompt:"login"});case 3:return s=t.v,l=s.account,t.n=4,i.acquireTokenSilent({scopes:f,account:l});case 4:p=t.v,a("Token acquired."),c("token",{accessToken:p.accessToken}),t.n=9;break;case 5:return t.p=5,b=t.v,a("Auth error: ".concat(b.message||"login failed")),t.p=6,t.n=7,i.acquireTokenPopup({scopes:f,prompt:"login"});case 7:y=t.v,a("Token acquired."),c("token",{accessToken:y.accessToken}),t.n=9;break;case 8:t.p=8,g=t.v,a("Auth error: ".concat(g.message||"login failed")),c("error",{message:g.message||"Auth failed."});case 9:return t.a(2)}},t,null,[[6,8],[2,5]])}),function(){var e=this,n=arguments;return new Promise(function(o,i){var c=t.apply(e,n);function a(t){r(c,o,i,a,u,"next",t)}function u(t){r(c,o,i,a,u,"throw",t)}a(void 0)})});return function(t){return n.apply(this,arguments)}}()),c("ready",{})})}();
+/******/ (function() { // webpackBootstrap
+/*!*****************************!*\
+  !*** ./src/dialogs/auth.js ***!
+  \*****************************/
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
+function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+/* global Office, msal */
+
+function sendMessage(type, payload) {
+  Office.context.ui.messageParent(JSON.stringify(_objectSpread({
+    type: type
+  }, payload)));
+}
+function setStatus(message) {
+  var el = document.getElementById("authStatus");
+  if (el) {
+    el.textContent = message;
+  }
+}
+function receiveConfig(message) {
+  try {
+    return JSON.parse(message);
+  } catch (error) {
+    return null;
+  }
+}
+Office.onReady(function () {
+  setStatus("Auth dialog ready");
+  // eslint-disable-next-line no-console
+  console.log("[AuthDialog] ready");
+  Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, /*#__PURE__*/function () {
+    var _ref = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(arg) {
+      var config, msalConfig, app, scopes, loginResult, account, tokenResult, fallback, _t, _t2;
+      return _regenerator().w(function (_context) {
+        while (1) switch (_context.p = _context.n) {
+          case 0:
+            config = receiveConfig(arg.message);
+            if (!(!config || !config.clientId)) {
+              _context.n = 1;
+              break;
+            }
+            setStatus("Missing auth config.");
+            sendMessage("error", {
+              message: "Missing auth configuration."
+            });
+            return _context.a(2);
+          case 1:
+            setStatus("Starting sign-in…");
+            msalConfig = {
+              auth: {
+                clientId: config.clientId,
+                authority: config.authority || "https://login.microsoftonline.com/organizations",
+                redirectUri: window.location.origin + window.location.pathname
+              },
+              cache: {
+                cacheLocation: "sessionStorage"
+              }
+            };
+            app = new msal.PublicClientApplication(msalConfig);
+            scopes = config.scopes || ["https://graph.microsoft.com/Calendars.ReadWrite"];
+            _context.p = 2;
+            _context.n = 3;
+            return app.loginPopup({
+              scopes: scopes,
+              prompt: "login"
+            });
+          case 3:
+            loginResult = _context.v;
+            account = loginResult.account;
+            _context.n = 4;
+            return app.acquireTokenSilent({
+              scopes: scopes,
+              account: account
+            });
+          case 4:
+            tokenResult = _context.v;
+            setStatus("Token acquired.");
+            sendMessage("token", {
+              accessToken: tokenResult.accessToken
+            });
+            _context.n = 9;
+            break;
+          case 5:
+            _context.p = 5;
+            _t = _context.v;
+            setStatus("Auth error: ".concat(_t.message || "login failed"));
+            _context.p = 6;
+            _context.n = 7;
+            return app.acquireTokenPopup({
+              scopes: scopes,
+              prompt: "login"
+            });
+          case 7:
+            fallback = _context.v;
+            setStatus("Token acquired.");
+            sendMessage("token", {
+              accessToken: fallback.accessToken
+            });
+            _context.n = 9;
+            break;
+          case 8:
+            _context.p = 8;
+            _t2 = _context.v;
+            setStatus("Auth error: ".concat(_t2.message || "login failed"));
+            sendMessage("error", {
+              message: _t2.message || "Auth failed."
+            });
+          case 9:
+            return _context.a(2);
+        }
+      }, _callee, null, [[6, 8], [2, 5]]);
+    }));
+    return function (_x) {
+      return _ref.apply(this, arguments);
+    };
+  }());
+  sendMessage("ready", {});
+});
+/******/ })()
+;
 //# sourceMappingURL=authDialog.js.map

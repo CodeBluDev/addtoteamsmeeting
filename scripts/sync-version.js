@@ -4,6 +4,7 @@ const path = require("path");
 const rootDir = path.resolve(__dirname, "..");
 const versionPath = path.join(rootDir, "version.json");
 const manifestPath = path.join(rootDir, "manifest.xml");
+const manifestDevPath = path.join(rootDir, "manifest.dev.xml");
 const commandsPath = path.join(rootDir, "src", "commands", "commands.js");
 
 function readJson(filePath) {
@@ -38,9 +39,9 @@ function updateCommands(version, buildMarker, cacheBuster, baseUrl) {
   writeFile(commandsPath, content);
 }
 
-function updateManifest(version, cacheBuster, manifestVersion, baseUrl) {
-  let content = fs.readFileSync(manifestPath, "utf8");
-  const labelText = `Add Teams Meeting to Location (${version})`;
+function updateManifest(filePath, version, cacheBuster, manifestVersion, baseUrl) {
+  let content = fs.readFileSync(filePath, "utf8");
+  const labelText = `[${version}] Add Teams Meeting to Location`;
 
   content = content.replace(
     /<DisplayName DefaultValue="[^"]*"\s*\/>/g,
@@ -64,7 +65,7 @@ function updateManifest(version, cacheBuster, manifestVersion, baseUrl) {
     content = content.replace(baseRegex, `$1?v=${cacheBuster}"`);
   }
 
-  writeFile(manifestPath, content);
+  writeFile(filePath, content);
 }
 
 function main() {
@@ -76,10 +77,18 @@ function main() {
     versionInfo.baseUrl
   );
   updateManifest(
+    manifestPath,
     versionInfo.version,
     versionInfo.cacheBuster,
     versionInfo.manifestVersion,
     versionInfo.baseUrl
+  );
+  updateManifest(
+    manifestDevPath,
+    versionInfo.version,
+    versionInfo.cacheBuster,
+    versionInfo.manifestVersion,
+    "https://127.0.0.1:3000"
   );
   console.log(`Synced version ${versionInfo.version}.`);
 }

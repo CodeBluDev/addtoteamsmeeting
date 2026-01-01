@@ -9,19 +9,19 @@ Office.onReady(() => {
   // If needed, Office.js is ready to be called.
 });
 
-const BUILD_TAG = "v1.8.2";
-const BUILD_MARKER = "2024-09-18T16:40Z";
+const BUILD_TAG = "v1.8.4";
+const BUILD_MARKER = "2026-01-01T14:28Z";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
 const NOTIFICATION_ICON_ID = "Icon.16x16";
-const DIALOG_URL = "https://127.0.0.1:3000/create-event.html?v=1.8.2";
+const DIALOG_URL = "https://codebludev.github.io/addtoteamsmeeting/create-event.html?v=1.8.4";
 const GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
 const GRAPH_SEARCH_DAYS = 90;
 const AAD_CLIENT_ID = "226fcb0c-fa77-48bb-a20e-70a75ce176fd";
 const AAD_AUTHORITY = "https://login.microsoftonline.com/organizations";
 const GRAPH_SCOPES = ["https://graph.microsoft.com/Calendars.ReadWrite"];
-const AUTH_DIALOG_URL = "https://127.0.0.1:3000/auth.html?v=1.8.2";
+const AUTH_DIALOG_URL = "https://codebludev.github.io/addtoteamsmeeting/auth.html?v=1.8.4";
 let cachedGraphToken = null;
 let cachedGraphTokenExpiresAt = 0;
 
@@ -168,7 +168,8 @@ function getUtcWindowEnd() {
 }
 
 function openCreateEventDialog(item, teamsLink) {
-  const subject = item.subject || "Teams meeting";
+  const baseSubject = item.subject || "Teams meeting";
+  const subject = prependBuildTag(baseSubject);
 
   Office.context.ui.displayDialogAsync(
     DIALOG_URL,
@@ -209,8 +210,9 @@ function openCreateEventDialog(item, teamsLink) {
           return;
         }
 
+        const subjectWithTag = prependBuildTag(data.subject || baseSubject);
         Office.context.mailbox.displayNewAppointmentForm({
-          subject: data.subject || subject,
+          subject: subjectWithTag,
           location: teamsLink,
           start,
           end
@@ -232,6 +234,17 @@ function openCreateEventDialog(item, teamsLink) {
       );
     }
   );
+}
+
+function prependBuildTag(subject) {
+  const prefix = `[${BUILD_TAG}] `;
+  if (!subject) {
+    return prefix.trim();
+  }
+  if (subject.startsWith(prefix)) {
+    return subject;
+  }
+  return `${prefix}${subject}`;
 }
 
 function getMessageTimeRange(item, callback) {

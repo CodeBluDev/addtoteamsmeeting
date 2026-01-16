@@ -20,12 +20,15 @@ function writeFile(filePath, content) {
   fs.writeFileSync(filePath, content, "utf8");
 }
 
-function requireEnv(name) {
+function requireEnv(name, fallback) {
   const value = process.env[name];
-  if (value === undefined || value === "") {
-    throw new Error(`Missing required environment variable: ${name}`);
+  if (value !== undefined && value !== "") {
+    return value;
   }
-  return value;
+  if (fallback !== undefined && fallback !== "") {
+    return fallback;
+  }
+  throw new Error(`Missing required environment variable: ${name}`);
 }
 
 function normalizeBaseUrl(value) {
@@ -111,9 +114,9 @@ function main() {
   const appId = requireEnv("MANIFEST_APP_ID");
 
   const baseUrl = normalizeBaseUrl(requireEnv("APP_BASE_URL"));
-  const devBaseUrl = normalizeBaseUrl(requireEnv("APP_BASE_URL_DEV"));
+  const devBaseUrl = normalizeBaseUrl(requireEnv("APP_BASE_URL_DEV", baseUrl));
   const appDomains = formatAppDomains(requireEnv("APP_DOMAINS"));
-  const appDomainsDev = formatAppDomains(requireEnv("APP_DOMAINS_DEV"));
+  const appDomainsDev = formatAppDomains(requireEnv("APP_DOMAINS_DEV", requireEnv("APP_DOMAINS")));
 
   const templateReplacements = {
     __APP_ID__: appId,

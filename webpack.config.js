@@ -9,23 +9,26 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 dotenv.config();
 
-function requireEnv(name) {
+function requireEnv(name, fallback) {
   const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
+  if (value) {
+    return value;
   }
-  return value;
+  if (fallback) {
+    return fallback;
+  }
+  throw new Error(`Missing required environment variable: ${name}`);
 }
 
-const urlDev = requireEnv("APP_BASE_URL_DEV").replace(/\/+$/, "");
 const urlProd = requireEnv("APP_BASE_URL").replace(/\/+$/, "");
+const urlDev = requireEnv("APP_BASE_URL_DEV", urlProd).replace(/\/+$/, "");
 const defineEnv = {
   "process.env.AAD_CLIENT_ID": JSON.stringify(requireEnv("AAD_CLIENT_ID")),
   "process.env.AAD_AUTHORITY": JSON.stringify(requireEnv("AAD_AUTHORITY")),
   "process.env.GRAPH_BASE_URL": JSON.stringify(requireEnv("GRAPH_BASE_URL")),
   "process.env.GRAPH_SCOPES": JSON.stringify(requireEnv("GRAPH_SCOPES")),
   "process.env.APP_BASE_URL": JSON.stringify(requireEnv("APP_BASE_URL")),
-  "process.env.APP_BASE_URL_DEV": JSON.stringify(requireEnv("APP_BASE_URL_DEV")),
+  "process.env.APP_BASE_URL_DEV": JSON.stringify(requireEnv("APP_BASE_URL_DEV", urlProd)),
 };
 
 function escapeRegExp(value) {

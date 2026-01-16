@@ -22,8 +22,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Sync manifest from env
+        run: npm run sync-version
+        env:
+          AAD_CLIENT_ID: ${{ secrets.AAD_CLIENT_ID }}
+          AAD_AUTHORITY: ${{ secrets.AAD_AUTHORITY }}
+          GRAPH_BASE_URL: ${{ secrets.GRAPH_BASE_URL }}
+          GRAPH_SCOPES: ${{ secrets.GRAPH_SCOPES }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          APP_BASE_URL_DEV: ${{ secrets.APP_BASE_URL_DEV }}
+          MANIFEST_APP_ID: ${{ secrets.MANIFEST_APP_ID }}
+          APP_DOMAINS: ${{ secrets.APP_DOMAINS }}
+          APP_DOMAINS_DEV: ${{ secrets.APP_DOMAINS_DEV }}
+
       - name: Build app
         run: npm run build
+        env:
+          AAD_CLIENT_ID: ${{ secrets.AAD_CLIENT_ID }}
+          AAD_AUTHORITY: ${{ secrets.AAD_AUTHORITY }}
+          GRAPH_BASE_URL: ${{ secrets.GRAPH_BASE_URL }}
+          GRAPH_SCOPES: ${{ secrets.GRAPH_SCOPES }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          APP_BASE_URL_DEV: ${{ secrets.APP_BASE_URL_DEV }}
+          MANIFEST_APP_ID: ${{ secrets.MANIFEST_APP_ID }}
+          APP_DOMAINS: ${{ secrets.APP_DOMAINS }}
+          APP_DOMAINS_DEV: ${{ secrets.APP_DOMAINS_DEV }}
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1

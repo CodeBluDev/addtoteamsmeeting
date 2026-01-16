@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add to Teams Meeting</title>
+    <style>
+      :root {
+        --bg: #f4efe6;
+        --text: #1d1c1a;
+        --accent: #d04a2c;
+        --accent-dark: #9f371f;
+        --ink: #2f2a25;
+        --soft: #fff8f1;
+        --stroke: #e4d8cb;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Alegreya", "Baskerville", "Times New Roman", serif;
+        color: var(--text);
+        background:
+          radial-gradient(70rem 40rem at -10% -20%, #fff1e0 0%, transparent 60%),
+          radial-gradient(60rem 35rem at 100% 0%, #f6d8c1 0%, transparent 55%),
+          linear-gradient(140deg, #fbf4e8 0%, #f1e7da 100%);
+      }
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 4rem 1.5rem 5.5rem;
+        position: relative;
+      }
+      .shape {
+        position: absolute;
+        inset: auto -2rem 4rem auto;
+        width: 220px;
+        height: 220px;
+        border-radius: 46% 54% 52% 48%;
+        background: linear-gradient(120deg, rgba(208, 74, 44, 0.22), rgba(255, 214, 170, 0.4));
+        filter: blur(0.5px);
+        z-index: 0;
+      }
+      .frame {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 1.75rem;
+      }
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--accent-dark);
+      }
+      h1 {
+        font-size: clamp(2.2rem, 4vw, 3.5rem);
+        letter-spacing: 0.01em;
+        margin: 0.35rem 0 0.75rem;
+      }
+      p {
+        font-size: 1.05rem;
+        line-height: 1.7;
+        margin: 0 0 1.25rem;
+      }
+      .card {
+        background: var(--soft);
+        border: 1px solid var(--stroke);
+        padding: 2rem;
+        border-radius: 18px;
+        box-shadow: 0 18px 40px rgba(32, 20, 9, 0.12);
+        animation: lift 700ms ease-out both;
+      }
+      .grid {
+        display: grid;
+        gap: 1.25rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        margin-top: 1.5rem;
+      }
+      .tile {
+        padding: 1rem 1.1rem;
+        border-radius: 14px;
+        background: #fff;
+        border: 1px solid rgba(228, 216, 203, 0.7);
+      }
+      .tile h3 {
+        margin: 0 0 0.35rem;
+        font-size: 1.05rem;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+      }
+      .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.8rem 1.35rem;
+        text-decoration: none;
+        color: #fff;
+        background: linear-gradient(120deg, var(--accent), var(--accent-dark));
+        border-radius: 999px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        box-shadow: 0 10px 18px rgba(208, 74, 44, 0.25);
+        transition: transform 150ms ease, box-shadow 150ms ease;
+      }
+      .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 24px rgba(208, 74, 44, 0.3);
+      }
+      .link {
+        color: var(--ink);
+        text-decoration: none;
+        font-weight: 600;
+        border-bottom: 2px solid rgba(47, 42, 37, 0.3);
+      }
+      .link:hover {
+        border-color: var(--accent);
+      }
+      ul {
+        margin: 0.5rem 0 0;
+        padding-left: 1.25rem;
+      }
+      li {
+        margin: 0.4rem 0;
+      }
+      @keyframes lift {
+        from {
+          opacity: 0;
+          transform: translateY(18px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (max-width: 600px) {
+        main {
+          padding: 3rem 1.25rem 4rem;
+        }
+        .card {
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="shape" aria-hidden="true"></div>
+      <div class="frame">
+        <div class="card">
+          <div class="eyebrow">Outlook Add-in</div>
+          <h1>Add to Teams Meeting</h1>
+          <p>
+            This add-in creates a Microsoft Teams meeting and drops it into the current Outlook
+            calendar invite. The primary experience lives inside Outlook, with a focused task pane
+            and lightweight dialogs for the flow.
+          </p>
+          <p>
+            If you are browsing this site directly, use the quick links below to open the add-in
+            surfaces for validation or demo.
+          </p>
+          <div class="actions">
+            <a class="button" href="taskpane.html">Open the task pane</a>
+            <a class="link" href="commands.html">Commands UI</a>
+            <a class="link" href="create-event.html">Create event dialog</a>
+            <a class="link" href="auth.html">Auth dialog</a>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="tile">
+            <h3>How it works</h3>
+            <p>
+              Launch the add-in from Outlook, connect your account, and create a Teams link that
+              populates the meeting body automatically.
+            </p>
+          </div>
+          <div class="tile">
+            <h3>Why this page exists</h3>
+            <p>
+              Azure Static Web Apps requires a default document. This page doubles as a public
+              landing and a handy jump-off for add-in testing.
+            </p>
+          </div>
+          <div class="tile">
+            <h3>Need help?</h3>
+            <p>
+              If something looks off, open the task pane link first. The add-in should still be
+              launched and used from Outlook.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xsi:type="MailApp">
   <Id>3ea7824c-6d87-41aa-9007-b9adfb5eba24</Id>
-  <Version>1.8.20.0</Version>
+  <Version>1.8.22.0</Version>
   <ProviderName>CodeBlu Development</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="[v1.8.20] Add Teams Meeting to Location"/>
+  <DisplayName DefaultValue="[v1.8.22] Add Teams Meeting to Location"/>
   <Description DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>
-  <IconUrl DefaultValue="https://codebludev.github.io/addtoteamsmeeting/assets/codeblu-teams-32.png?v=1.8.20"/>
-  <HighResolutionIconUrl DefaultValue="https://codebludev.github.io/addtoteamsmeeting/assets/codeblu-teams-128.png?v=1.8.20"/>
+  <IconUrl DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/codeblu-teams-32.png?v=1.8.22"/>
+  <HighResolutionIconUrl DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/codeblu-teams-128.png?v=1.8.22"/>
   <SupportUrl DefaultValue="https://codebludev.com/contact"/>
   <AppDomains>
     <AppDomain>https://codebludev.github.io</AppDomain>
-    <AppDomain>https://codebludev.github.io/addtoteamsmeeting</AppDomain>
+    <AppDomain>https://salmon-pebble-0aae76c0f.6.azurestaticapps.net</AppDomain>
     <AppDomain>https://graph.microsoft.com</AppDomain>
     <AppDomain>https://login.microsoftonline.com</AppDomain>
     <AppDomain>https://alcdn.msauth.net</AppDomain>
@@ -27,7 +27,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://codebludev.github.io/addtoteamsmeeting/commands.html?v=1.8.20"/>
+        <SourceLocation DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/commands.html?v=1.8.22"/>
         <RequestedHeight>250</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -74,16 +74,16 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://codebludev.github.io/addtoteamsmeeting/assets/codeblu-teams-16.png?v=1.8.20"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://codebludev.github.io/addtoteamsmeeting/assets/codeblu-teams-32.png?v=1.8.20"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://codebludev.github.io/addtoteamsmeeting/assets/codeblu-teams-80.png?v=1.8.20"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/codeblu-teams-16.png?v=1.8.22"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/codeblu-teams-32.png?v=1.8.22"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/codeblu-teams-80.png?v=1.8.22"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url" DefaultValue="https://codebludev.github.io/addtoteamsmeeting/commands.html?v=1.8.20"/>
+        <bt:Url id="Commands.Url" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/commands.html?v=1.8.22"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="Teams Tools"/>
-        <bt:String id="ActionButton.Label" DefaultValue="[v1.8.20] Add Teams Meeting to Location"/>
+        <bt:String id="ActionButton.Label" DefaultValue="[v1.8.22] Add Teams Meeting to Location"/>
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="ActionButton.Tooltip" DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>

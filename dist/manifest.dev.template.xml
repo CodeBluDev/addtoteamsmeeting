@@ -1,20 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xsi:type="MailApp">
-  <Id>3ea7824c-6d87-41aa-9007-b9adfb5eba24</Id>
-  <Version>1.8.22.0</Version>
+  <Id>__APP_ID__</Id>
+  <Version>1.8.25.0</Version>
   <ProviderName>CodeBlu Development</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="[v1.8.22] Add Teams Meeting to Location"/>
+  <DisplayName DefaultValue="[v1.8.25] Add Teams Meeting to Location"/>
   <Description DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>
-  <IconUrl DefaultValue="https://initiative-providence-hay-directories.trycloudflare.com/assets/codeblu-teams-32.png?v=1.8.22"/>
-  <HighResolutionIconUrl DefaultValue="https://initiative-providence-hay-directories.trycloudflare.com/assets/codeblu-teams-128.png?v=1.8.22"/>
+  <IconUrl DefaultValue="__APP_BASE_URL_DEV__/assets/codeblu-teams-32.png?v=__CACHE_BUSTER__"/>
+  <HighResolutionIconUrl DefaultValue="__APP_BASE_URL_DEV__/assets/codeblu-teams-128.png?v=__CACHE_BUSTER__"/>
   <SupportUrl DefaultValue="https://codebludev.com/contact"/>
   <AppDomains>
-    <AppDomain>https://codebludev.github.io</AppDomain>
-    <AppDomain>https://initiative-providence-hay-directories.trycloudflare.com</AppDomain>
-    <AppDomain>https://graph.microsoft.com</AppDomain>
-    <AppDomain>https://login.microsoftonline.com</AppDomain>
-    <AppDomain>https://alcdn.msauth.net</AppDomain>
+    __APP_DOMAINS_DEV__
   </AppDomains>
   <Hosts>
     <Host Name="Mailbox"/>
@@ -27,7 +23,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://initiative-providence-hay-directories.trycloudflare.com/commands.html?v=1.8.22"/>
+        <SourceLocation DefaultValue="__APP_BASE_URL_DEV__/commands.html?v=__CACHE_BUSTER__"/>
         <RequestedHeight>250</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -74,16 +70,16 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://initiative-providence-hay-directories.trycloudflare.com/assets/codeblu-teams-16.png?v=1.8.22"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://initiative-providence-hay-directories.trycloudflare.com/assets/codeblu-teams-32.png?v=1.8.22"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://initiative-providence-hay-directories.trycloudflare.com/assets/codeblu-teams-80.png?v=1.8.22"/>
+        <bt:Image id="Icon.16x16" DefaultValue="__APP_BASE_URL_DEV__/assets/codeblu-teams-16.png?v=__CACHE_BUSTER__"/>
+        <bt:Image id="Icon.32x32" DefaultValue="__APP_BASE_URL_DEV__/assets/codeblu-teams-32.png?v=__CACHE_BUSTER__"/>
+        <bt:Image id="Icon.80x80" DefaultValue="__APP_BASE_URL_DEV__/assets/codeblu-teams-80.png?v=__CACHE_BUSTER__"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url" DefaultValue="https://initiative-providence-hay-directories.trycloudflare.com/commands.html?v=1.8.22"/>
+        <bt:Url id="Commands.Url" DefaultValue="__APP_BASE_URL_DEV__/commands.html?v=__CACHE_BUSTER__"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="Teams Tools"/>
-        <bt:String id="ActionButton.Label" DefaultValue="[v1.8.22] Add Teams Meeting to Location"/>
+        <bt:String id="ActionButton.Label" DefaultValue="[v1.8.25] Add Teams Meeting to Location"/>
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="ActionButton.Tooltip" DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>

@@ -65,6 +65,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
           app_location: /
-          output_location: dist
+          app_artifact_location: dist
           skip_app_build: true
 

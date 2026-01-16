@@ -50,10 +50,21 @@ jobs:
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
+        env:
+          AAD_CLIENT_ID: ${{ secrets.AAD_CLIENT_ID }}
+          AAD_AUTHORITY: ${{ secrets.AAD_AUTHORITY }}
+          GRAPH_BASE_URL: ${{ secrets.GRAPH_BASE_URL }}
+          GRAPH_SCOPES: ${{ secrets.GRAPH_SCOPES }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          APP_BASE_URL_DEV: ${{ secrets.APP_BASE_URL_DEV }}
+          MANIFEST_APP_ID: ${{ secrets.MANIFEST_APP_ID }}
+          APP_DOMAINS: ${{ secrets.APP_DOMAINS }}
+          APP_DOMAINS_DEV: ${{ secrets.APP_DOMAINS_DEV }}
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
           app_location: /
           output_location: dist
+          skip_app_build: true
 

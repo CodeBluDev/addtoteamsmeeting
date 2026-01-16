@@ -81,7 +81,7 @@ function updateCommands(version, buildMarker, cacheBuster) {
 
 function updateManifest(filePath, version, cacheBuster, manifestVersion, baseUrl) {
   let content = fs.readFileSync(filePath, "utf8");
-  const labelText = `[${version}] Add Teams Meeting to Location`;
+  const labelText = "Add Teams Meeting to Location";
 
   content = content.replace(
     /<DisplayName DefaultValue="[^"]*"\s*\/>/g,

@@ -4,7 +4,7 @@
   <Version>1.8.25.0</Version>
   <ProviderName>CodeBlu Development</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="[v1.8.25] Add Teams Meeting to Location"/>
+  <DisplayName DefaultValue="Add Teams Meeting to Location"/>
   <Description DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>
   <IconUrl DefaultValue="__APP_BASE_URL__/assets/codeblu-teams-32.png?v=__CACHE_BUSTER__"/>
   <HighResolutionIconUrl DefaultValue="__APP_BASE_URL__/assets/codeblu-teams-128.png?v=__CACHE_BUSTER__"/>
@@ -79,7 +79,7 @@
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="Teams Tools"/>
-        <bt:String id="ActionButton.Label" DefaultValue="[v1.8.25] Add Teams Meeting to Location"/>
+        <bt:String id="ActionButton.Label" DefaultValue="Add Teams Meeting to Location"/>
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="ActionButton.Tooltip" DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>

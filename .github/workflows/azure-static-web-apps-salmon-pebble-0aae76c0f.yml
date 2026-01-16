@@ -35,4 +35,4 @@ jobs:
 
           # 🔑 OPTION A CORE SETTINGS
           skip_app_build: true
-          app_artifact_location: dist
+          app_location: dist

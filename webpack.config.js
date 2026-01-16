@@ -1,12 +1,36 @@
 /* eslint-disable no-undef */
 
 const path = require("path");
+const webpack = require("webpack");
+const dotenv = require("dotenv");
 const devCerts = require("office-addin-dev-certs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
-const urlDev = "https://127.0.0.1:3000/";
-const urlProd = "https://YOUR_VERCEL_DOMAIN.vercel.app/";
+dotenv.config();
+
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+const urlDev = requireEnv("APP_BASE_URL_DEV").replace(/\/+$/, "");
+const urlProd = requireEnv("APP_BASE_URL").replace(/\/+$/, "");
+const defineEnv = {
+  "process.env.AAD_CLIENT_ID": JSON.stringify(requireEnv("AAD_CLIENT_ID")),
+  "process.env.AAD_AUTHORITY": JSON.stringify(requireEnv("AAD_AUTHORITY")),
+  "process.env.GRAPH_BASE_URL": JSON.stringify(requireEnv("GRAPH_BASE_URL")),
+  "process.env.GRAPH_SCOPES": JSON.stringify(requireEnv("GRAPH_SCOPES")),
+  "process.env.APP_BASE_URL": JSON.stringify(requireEnv("APP_BASE_URL")),
+  "process.env.APP_BASE_URL_DEV": JSON.stringify(requireEnv("APP_BASE_URL_DEV")),
+};
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 async function getHttpsOptions() {
   const httpsOptions = await devCerts.getHttpsServerOptions();
@@ -56,6 +80,7 @@ module.exports = async (env, options) => {
       ],
     },
     plugins: [
+      new webpack.DefinePlugin(defineEnv),
       new HtmlWebpackPlugin({
         filename: "taskpane.html",
         template: "./src/taskpane/taskpane.html",
@@ -77,9 +102,8 @@ module.exports = async (env, options) => {
             transform(content) {
               if (dev) {
                 return content;
-              } else {
-                return content.toString().replace(new RegExp(urlDev, "g"), urlProd);
               }
+              return content.toString().replace(new RegExp(escapeRegExp(urlDev), "g"), urlProd);
             },
           },
         ],

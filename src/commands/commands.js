@@ -11,22 +11,36 @@ Office.onReady(() => {
 
 const BUILD_TAG = "v1.8.22";
 const BUILD_MARKER = "2026-01-16T12:33Z";
-const DEFAULT_BASE_URL = "https://salmon-pebble-0aae76c0f.6.azurestaticapps.net";
+const DEFAULT_BASE_URL = requireConfig("APP_BASE_URL", process.env.APP_BASE_URL);
 const CACHE_BUSTER = "1.8.22";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
 const NOTIFICATION_ICON_ID = "Icon.16x16";
 const DIALOG_URL = getDialogUrl("create-event.html");
-const GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
+const GRAPH_BASE_URL = requireConfig("GRAPH_BASE_URL", process.env.GRAPH_BASE_URL);
 const GRAPH_SEARCH_DAYS = 365;
-const AAD_CLIENT_ID = "226fcb0c-fa77-48bb-a20e-70a75ce176fd";
-const AAD_AUTHORITY = "https://login.microsoftonline.com/organizations";
-const GRAPH_SCOPES = ["https://graph.microsoft.com/Calendars.ReadWrite"];
+const AAD_CLIENT_ID = requireConfig("AAD_CLIENT_ID", process.env.AAD_CLIENT_ID);
+const AAD_AUTHORITY = requireConfig("AAD_AUTHORITY", process.env.AAD_AUTHORITY);
+const GRAPH_SCOPES = parseGraphScopes(requireConfig("GRAPH_SCOPES", process.env.GRAPH_SCOPES));
 const AUTH_DIALOG_URL = getDialogUrl("auth.html");
 let cachedGraphToken = null;
 let cachedGraphTokenExpiresAt = 0;
 const GRAPH_TOKEN_STORAGE_KEY = "addTeamsGraphToken";
+
+function requireConfig(name, value) {
+  if (!value) {
+    throw new Error(`Missing required configuration: ${name}`);
+  }
+  return value;
+}
+
+function parseGraphScopes(raw) {
+  return raw
+    .split(/[, ]+/)
+    .map((scope) => scope.trim())
+    .filter(Boolean);
+}
 
 /**
  * Shows a notification when the add-in command is executed.

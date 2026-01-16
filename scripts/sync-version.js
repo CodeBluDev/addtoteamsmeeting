@@ -1,11 +1,16 @@
 const fs = require("fs");
 const path = require("path");
+const dotenv = require("dotenv");
 
 const rootDir = path.resolve(__dirname, "..");
 const versionPath = path.join(rootDir, "version.json");
 const manifestPath = path.join(rootDir, "manifest.xml");
 const manifestDevPath = path.join(rootDir, "manifest.dev.xml");
+const manifestTemplatePath = path.join(rootDir, "manifest.template.xml");
+const manifestDevTemplatePath = path.join(rootDir, "manifest.dev.template.xml");
 const commandsPath = path.join(rootDir, "src", "commands", "commands.js");
+
+dotenv.config();
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -15,7 +20,44 @@ function writeFile(filePath, content) {
   fs.writeFileSync(filePath, content, "utf8");
 }
 
-function updateCommands(version, buildMarker, cacheBuster, baseUrl) {
+function requireEnv(name) {
+  const value = process.env[name];
+  if (value === undefined || value === "") {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+function normalizeBaseUrl(value) {
+  if (!value) {
+    return value;
+  }
+  return value.replace(/\/+$/, "");
+}
+
+function formatAppDomains(domains) {
+  const entries = String(domains || "")
+    .split(",")
+    .map((domain) => domain.trim())
+    .filter(Boolean);
+  return entries.map((domain) => `<AppDomain>${domain}</AppDomain>`).join("\n    ");
+}
+
+function applyReplacements(content, replacements) {
+  let output = content;
+  Object.keys(replacements).forEach((key) => {
+    output = output.split(key).join(replacements[key]);
+  });
+  return output;
+}
+
+function renderManifestTemplate(templatePath, outputPath, replacements) {
+  const template = fs.readFileSync(templatePath, "utf8");
+  const rendered = applyReplacements(template, replacements);
+  writeFile(outputPath, rendered);
+}
+
+function updateCommands(version, buildMarker, cacheBuster) {
   let content = fs.readFileSync(commandsPath, "utf8");
   content = content.replace(
     /const BUILD_TAG = ".*?";/g,
@@ -29,12 +71,6 @@ function updateCommands(version, buildMarker, cacheBuster, baseUrl) {
     content = content.replace(
       /const CACHE_BUSTER = ".*?";/g,
       `const CACHE_BUSTER = "${cacheBuster}";`
-    );
-  }
-  if (baseUrl) {
-    content = content.replace(
-      /const DEFAULT_BASE_URL = ".*?";/g,
-      `const DEFAULT_BASE_URL = "${baseUrl}";`
     );
   }
   writeFile(commandsPath, content);
@@ -72,25 +108,43 @@ function updateManifest(filePath, version, cacheBuster, manifestVersion, baseUrl
 
 function main() {
   const versionInfo = readJson(versionPath);
+  const appId = requireEnv("MANIFEST_APP_ID");
+
+  const baseUrl = normalizeBaseUrl(requireEnv("APP_BASE_URL"));
+  const devBaseUrl = normalizeBaseUrl(requireEnv("APP_BASE_URL_DEV"));
+  const appDomains = formatAppDomains(requireEnv("APP_DOMAINS"));
+  const appDomainsDev = formatAppDomains(requireEnv("APP_DOMAINS_DEV"));
+
+  const templateReplacements = {
+    __APP_ID__: appId,
+    __APP_BASE_URL__: baseUrl || "",
+    __APP_BASE_URL_DEV__: devBaseUrl || "",
+    __APP_DOMAINS__: appDomains,
+    __APP_DOMAINS_DEV__: appDomainsDev,
+    __CACHE_BUSTER__: versionInfo.cacheBuster
+  };
+
+  renderManifestTemplate(manifestTemplatePath, manifestPath, templateReplacements);
+  renderManifestTemplate(manifestDevTemplatePath, manifestDevPath, templateReplacements);
+
   updateCommands(
     versionInfo.version,
     versionInfo.buildMarker,
-    versionInfo.cacheBuster,
-    versionInfo.baseUrl
+    versionInfo.cacheBuster
   );
   updateManifest(
     manifestPath,
     versionInfo.version,
     versionInfo.cacheBuster,
     versionInfo.manifestVersion,
-    versionInfo.baseUrl
+    baseUrl
   );
   updateManifest(
     manifestDevPath,
     versionInfo.version,
     versionInfo.cacheBuster,
     versionInfo.manifestVersion,
-    versionInfo.devBaseUrl || "https://127.0.0.1:3000"
+    devBaseUrl
   );
   console.log(`Synced version ${versionInfo.version}.`);
 }

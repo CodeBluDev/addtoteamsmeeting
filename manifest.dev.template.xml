@@ -6,8 +6,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Add Teams Meeting to Location"/>
   <Description DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>
-  <IconUrl DefaultValue="__APP_BASE_URL_DEV__/assets/codeblu-teams-32.png?v=__CACHE_BUSTER__"/>
-  <HighResolutionIconUrl DefaultValue="__APP_BASE_URL_DEV__/assets/codeblu-teams-128.png?v=__CACHE_BUSTER__"/>
+  <IconUrl DefaultValue="__APP_BASE_URL_DEV__/assets/icon-32.png?v=__CACHE_BUSTER__"/>
+  <HighResolutionIconUrl DefaultValue="__APP_BASE_URL_DEV__/assets/icon-128.png?v=__CACHE_BUSTER__"/>
   <SupportUrl DefaultValue="https://codebludev.com/contact"/>
   <AppDomains>
     __APP_DOMAINS_DEV__
@@ -70,9 +70,9 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="__APP_BASE_URL_DEV__/assets/codeblu-teams-16.png?v=__CACHE_BUSTER__"/>
-        <bt:Image id="Icon.32x32" DefaultValue="__APP_BASE_URL_DEV__/assets/codeblu-teams-32.png?v=__CACHE_BUSTER__"/>
-        <bt:Image id="Icon.80x80" DefaultValue="__APP_BASE_URL_DEV__/assets/codeblu-teams-80.png?v=__CACHE_BUSTER__"/>
+        <bt:Image id="Icon.16x16" DefaultValue="__APP_BASE_URL_DEV__/assets/icon-16.png?v=__CACHE_BUSTER__"/>
+        <bt:Image id="Icon.32x32" DefaultValue="__APP_BASE_URL_DEV__/assets/icon-32.png?v=__CACHE_BUSTER__"/>
+        <bt:Image id="Icon.80x80" DefaultValue="__APP_BASE_URL_DEV__/assets/icon-80.png?v=__CACHE_BUSTER__"/>
       </bt:Images>
       <bt:Urls>
         <bt:Url id="Commands.Url" DefaultValue="__APP_BASE_URL_DEV__/commands.html?v=__CACHE_BUSTER__"/>

@@ -6,8 +6,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Add Teams Meeting to Location"/>
   <Description DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>
-  <IconUrl DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/codeblu-teams-32.png?v=1.8.22"/>
-  <HighResolutionIconUrl DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/codeblu-teams-128.png?v=1.8.22"/>
+  <IconUrl DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/icon-32.png?v=1.8.22"/>
+  <HighResolutionIconUrl DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/icon-128.png?v=1.8.22"/>
   <SupportUrl DefaultValue="https://codebludev.com/contact"/>
   <AppDomains>
     <AppDomain>https://codebludev.github.io</AppDomain>
@@ -74,9 +74,9 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/codeblu-teams-16.png?v=1.8.22"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/codeblu-teams-32.png?v=1.8.22"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/codeblu-teams-80.png?v=1.8.22"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/icon-16.png?v=1.8.22"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/icon-32.png?v=1.8.22"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/icon-80.png?v=1.8.22"/>
       </bt:Images>
       <bt:Urls>
         <bt:Url id="Commands.Url" DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/commands.html?v=1.8.22"/>

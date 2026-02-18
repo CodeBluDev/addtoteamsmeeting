@@ -9,10 +9,10 @@ Office.onReady(() => {
   // If needed, Office.js is ready to be called.
 });
 
-const BUILD_TAG = "v1.8.22";
-const BUILD_MARKER = "2026-01-16T12:33Z";
+const BUILD_TAG = "v1.9.0";
+const BUILD_MARKER = "2026-02-18T11:10Z";
 const DEFAULT_BASE_URL = requireConfig("APP_BASE_URL", process.env.APP_BASE_URL);
-const CACHE_BUSTER = "1.8.22";
+const CACHE_BUSTER = "1.9.0";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;

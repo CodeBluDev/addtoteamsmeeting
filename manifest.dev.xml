@@ -6,8 +6,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Add Teams Meeting to Location"/>
   <Description DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>
-  <IconUrl DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/assets/icon-32.png?v=1.8.22"/>
-  <HighResolutionIconUrl DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/assets/icon-128.png?v=1.8.22"/>
+  <IconUrl DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/assets/icon-32.png?v=1.9.0"/>
+  <HighResolutionIconUrl DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/assets/icon-128.png?v=1.9.0"/>
   <SupportUrl DefaultValue="https://codebludev.com/contact"/>
   <AppDomains>
     <AppDomain>https://codebludev.github.io</AppDomain>
@@ -27,7 +27,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/commands.html?v=1.8.22"/>
+        <SourceLocation DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/commands.html?v=1.9.0"/>
         <RequestedHeight>250</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -74,12 +74,12 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/assets/icon-16.png?v=1.8.22"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/assets/icon-32.png?v=1.8.22"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/assets/icon-80.png?v=1.8.22"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/assets/icon-16.png?v=1.9.0"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/assets/icon-32.png?v=1.9.0"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/assets/icon-80.png?v=1.9.0"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url" DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/commands.html?v=1.8.22"/>
+        <bt:Url id="Commands.Url" DefaultValue="https://easier-stylish-responses-west.trycloudflare.com/commands.html?v=1.9.0"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="Teams Tools"/>

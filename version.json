@@ -1,8 +1,8 @@
 {
-  "version": "v1.8.22",
-  "buildMarker": "2026-01-16T12:33Z",
-  "cacheBuster": "1.8.22",
-  "manifestVersion": "1.8.22.0",
+  "version": "v1.9.0",
+  "buildMarker": "2026-02-18T11:10Z",
+  "cacheBuster": "1.9.0",
+  "manifestVersion": "1.9.0.0",
   "baseUrl": "https://salmon-pebble-0aae76c0f.6.azurestaticapps.net",
   "devBaseUrl": "https://initiative-providence-hay-directories.trycloudflare.com"
 }

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xsi:type="MailApp">
   <Id>3ea7824c-6d87-41aa-9007-b9adfb5eba24</Id>
-  <Version>1.8.22.0</Version>
+  <Version>1.8.22.1</Version>
   <ProviderName>CodeBlu Development</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Add Teams Meeting to Location"/>
   <Description DefaultValue="Copies the Microsoft Teams meeting link into the Location field."/>
-  <IconUrl DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/icon-32.png?v=1.8.22"/>
+  <IconUrl DefaultValue="v"/>
   <HighResolutionIconUrl DefaultValue="https://salmon-pebble-0aae76c0f.6.azurestaticapps.net/assets/icon-128.png?v=1.8.22"/>
   <SupportUrl DefaultValue="https://codebludev.com/contact"/>
   <AppDomains>

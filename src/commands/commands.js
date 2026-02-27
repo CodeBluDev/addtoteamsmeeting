@@ -63,6 +63,14 @@ function addTeamsLinkToLocation(event) {
     }
 
     const bodyHtml = bodyResult.value;
+    const bodyJoinWebUrl = extractTeamsMeetJoinWebUrl(bodyHtml);
+    logDebug("Teams /meet/ link match", { found: Boolean(bodyJoinWebUrl) });
+
+    if (!bodyJoinWebUrl) {
+      notifyInfo(item, "No Teams /meet/ join link found in this invite body.");
+      event.completed();
+      return;
+    }
 
     const meetingId = extractMeetingId(bodyHtml);
     logDebug("Teams meeting id extracted", { meetingId });
@@ -78,12 +86,12 @@ function addTeamsLinkToLocation(event) {
         const matchedEvent = await findCalendarEventByGraph(meetingId);
         if (!matchedEvent) {
           notifyInfo(item, "No matching calendar event found. Opening event dialog.");
-          openCreateEventDialog(item, null);
+          openCreateEventDialog(item, bodyJoinWebUrl);
           return;
         }
 
-        assertValidTeamsMeetJoinWebUrl(matchedEvent.joinWebUrl);
-        await updateCalendarEventLocationGraph(matchedEvent.id, matchedEvent.joinWebUrl);
+        assertValidTeamsMeetJoinWebUrl(bodyJoinWebUrl);
+        await updateCalendarEventLocationGraph(matchedEvent.id, bodyJoinWebUrl);
         notifySuccess(item);
       } catch (error) {
         logDebug("Graph update failed", { message: error.message });
@@ -544,10 +552,8 @@ async function findCalendarEventByGraph(meetingId) {
 
     for (let i = 0; i < items.length; i += 1) {
       if (eventMatchesTeams(items[i], meetingId)) {
-        const joinWebUrl = await fetchEventJoinWebUrl(token, items[i].id);
         return {
-          id: items[i].id,
-          joinWebUrl
+          id: items[i].id
         };
       }
     }
@@ -588,34 +594,6 @@ async function updateCalendarEventLocationGraph(eventId, joinWebUrl) {
     const text = await response.text();
     throw new Error(`Graph update failed: ${response.status} ${text}`);
   }
-}
-
-async function fetchEventJoinWebUrl(token, eventId) {
-  const url = `${GRAPH_BASE_URL}/me/events/${encodeURIComponent(
-    eventId
-  )}?$select=onlineMeeting`;
-  logDebug("Graph event detail request", {
-    method: "GET",
-    url,
-    headers: {
-      Authorization: exposeAuthHeader(token)
-    }
-  });
-
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-
-  await logGraphResponse("eventDetail", response);
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Graph event detail failed: ${response.status} ${text}`);
-  }
-
-  const event = await response.json();
-  return getEventJoinWebUrl(event);
 }
 
 async function getGraphAccessToken() {
@@ -793,11 +771,10 @@ function getGraphAccessTokenViaDialog() {
   });
 }
 
-function extractTeamsLink(bodyHtml) {
-  const teamsRegex = /https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s"<]+/i;
+function extractTeamsMeetJoinWebUrl(bodyHtml) {
+  const meetRegex = /https:\/\/teams\.microsoft\.com\/meet\/[^\s"<]+/i;
   const safeLinksRegex = /https:\/\/[^\/]+\.safelinks\.protection\.outlook\.com\/[^\s"<]+/i;
-  const akaTeamsRegex = /https:\/\/aka\.ms\/[^\s"<]*teams[^\s"<]*/i;
-  const directLink = findTeamsLinkInText(bodyHtml);
+  const directLink = findTeamsMeetLinkInText(bodyHtml);
   if (directLink) {
     return directLink;
   }
@@ -807,7 +784,7 @@ function extractTeamsLink(bodyHtml) {
     const rawUrl = urls[i];
     const cleanedUrl = rawUrl.replace(/&amp;/g, "&");
 
-    if (teamsRegex.test(cleanedUrl)) {
+    if (meetRegex.test(cleanedUrl)) {
       return decodeLink(cleanedUrl);
     }
 
@@ -815,29 +792,25 @@ function extractTeamsLink(bodyHtml) {
       const extracted = extractSafeLinkTarget(cleanedUrl);
       if (extracted) {
         const decoded = decodeLink(extracted);
-        if (teamsRegex.test(decoded)) {
+        if (meetRegex.test(decoded)) {
           return decoded;
         }
       }
-    }
-
-    if (akaTeamsRegex.test(cleanedUrl)) {
-      return cleanedUrl;
     }
   }
 
   return null;
 }
 
-function findTeamsLinkInText(text) {
+function findTeamsMeetLinkInText(text) {
   const candidates = [];
-  const rawMatches = text.match(/https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s"'<>]+/gi);
+  const rawMatches = text.match(/https:\/\/teams\.microsoft\.com\/meet\/[^\s"'<>]+/gi);
   if (rawMatches) {
     candidates.push(...rawMatches);
   }
 
   const decodedHtml = decodeHtmlEntities(text);
-  const decodedMatches = decodedHtml.match(/https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[^\s"'<>]+/gi);
+  const decodedMatches = decodedHtml.match(/https:\/\/teams\.microsoft\.com\/meet\/[^\s"'<>]+/gi);
   if (decodedMatches) {
     candidates.push(...decodedMatches);
   }
@@ -914,7 +887,7 @@ function getEventJoinWebUrl(event) {
 
 function assertValidTeamsMeetJoinWebUrl(url) {
   if (!url || !url.includes("/meet/")) {
-    throw new Error("Invalid Teams guest join URL: expected onlineMeeting.joinWebUrl with /meet/.");
+    throw new Error("Invalid Teams guest join URL: expected a /meet/ link.");
   }
 }
 

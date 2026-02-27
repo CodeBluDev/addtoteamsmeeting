@@ -79,14 +79,15 @@ function addTeamsLinkToLocation(event) {
 
     (async () => {
       try {
-        const eventId = await findCalendarEventByGraph(teamsLink, meetingId);
-        if (!eventId) {
+        const matchedEvent = await findCalendarEventByGraph(teamsLink, meetingId);
+        if (!matchedEvent) {
           notifyInfo(item, "No matching calendar event found. Opening event dialog.");
           openCreateEventDialog(item, teamsLink);
           return;
         }
 
-        await updateCalendarEventLocationGraph(eventId, teamsLink);
+        const locationLink = matchedEvent.joinWebUrl || teamsLink;
+        await updateCalendarEventLocationGraph(matchedEvent.id, locationLink);
         notifySuccess(item);
       } catch (error) {
         logDebug("Graph update failed", { message: error.message });
@@ -522,7 +523,8 @@ async function findCalendarEventByGraph(teamsLink, meetingId) {
   let url = `${GRAPH_BASE_URL}/me/calendarView?startDateTime=${encodeURIComponent(
     start.toISOString()
   )}&endDateTime=${encodeURIComponent(end.toISOString())}` +
-    "&$select=id,subject,body,location,onlineMeetingUrl,start,end";
+    "&$select=id,subject,body,location,onlineMeeting,onlineMeetingUrl,start,end" +
+    "&$expand=onlineMeeting($select=joinWebUrl)";
 
   while (url) {
     logDebug("Graph calendarView request", {
@@ -555,7 +557,10 @@ async function findCalendarEventByGraph(teamsLink, meetingId) {
 
     for (let i = 0; i < items.length; i += 1) {
       if (eventMatchesTeams(items[i], teamsLink, meetingId)) {
-        return items[i].id;
+        return {
+          id: items[i].id,
+          joinWebUrl: getEventJoinWebUrl(items[i])
+        };
       }
     }
 
@@ -634,7 +639,7 @@ async function getGraphAccessToken() {
 
 function eventMatchesTeams(event, teamsLink, meetingId) {
   const bodyText = normalizeText(event.body && event.body.content ? event.body.content : "");
-  const onlineUrl = normalizeText(event.onlineMeetingUrl || "");
+  const onlineUrl = normalizeText(getEventJoinWebUrl(event));
   const locationText = normalizeText(
     event.location && event.location.displayName ? event.location.displayName : ""
   );
@@ -874,7 +879,8 @@ function normalizeText(text) {
 
 function summarizeGraphItem(item, teamsLink, meetingId) {
   const bodyText = normalizeText(item.body && item.body.content ? item.body.content : "");
-  const onlineUrl = normalizeText(item.onlineMeetingUrl || "");
+  const joinWebUrl = getEventJoinWebUrl(item);
+  const onlineUrl = normalizeText(joinWebUrl);
   const locationText = normalizeText(
     item.location && item.location.displayName ? item.location.displayName : ""
   );
@@ -885,6 +891,7 @@ function summarizeGraphItem(item, teamsLink, meetingId) {
     subject: item.subject || null,
     start: item.start && item.start.dateTime ? item.start.dateTime : null,
     onlineMeetingUrl: item.onlineMeetingUrl || null,
+    joinWebUrl: joinWebUrl || null,
     location: item.location && item.location.displayName ? item.location.displayName : null,
     hasMeetingId: Boolean(
       normalizedMeetingId &&
@@ -899,6 +906,19 @@ function summarizeGraphItem(item, teamsLink, meetingId) {
           locationText.includes(normalizedTeamsLink))
     )
   };
+}
+
+function getEventJoinWebUrl(event) {
+  if (!event) {
+    return "";
+  }
+  if (event.onlineMeeting && event.onlineMeeting.joinWebUrl) {
+    return event.onlineMeeting.joinWebUrl;
+  }
+  if (event.onlineMeetingUrl) {
+    return event.onlineMeetingUrl;
+  }
+  return "";
 }
 
 function extractSafeLinkTarget(safeLinkUrl) {

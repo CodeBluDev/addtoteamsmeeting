@@ -9,10 +9,10 @@ Office.onReady(() => {
   // If needed, Office.js is ready to be called.
 });
 
-const BUILD_TAG = "v1.9.0";
-const BUILD_MARKER = "2026-02-18T11:10Z";
+const BUILD_TAG = "v1.9.1";
+const BUILD_MARKER = "2026-02-27T18:14Z";
 const DEFAULT_BASE_URL = requireConfig("APP_BASE_URL", process.env.APP_BASE_URL);
-const CACHE_BUSTER = "1.9.0";
+const CACHE_BUSTER = "1.9.1";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
@@ -64,30 +64,26 @@ function addTeamsLinkToLocation(event) {
 
     const bodyHtml = bodyResult.value;
 
-    // Extract the Teams meeting link
-    const teamsLink = extractTeamsLink(bodyHtml);
-    logDebug("Teams link match", { found: Boolean(teamsLink) });
+    const meetingId = extractMeetingId(bodyHtml);
+    logDebug("Teams meeting id extracted", { meetingId });
 
-    if (!teamsLink) {
-      notifyInfo(item, "No Microsoft Teams meeting link found in this invite.");
+    if (!meetingId) {
+      notifyInfo(item, "No Microsoft Teams meeting ID found in this invite.");
       event.completed();
       return;
     }
 
-    const meetingId = extractMeetingId(bodyHtml, teamsLink);
-    logDebug("Teams meeting id extracted", { meetingId });
-
     (async () => {
       try {
-        const matchedEvent = await findCalendarEventByGraph(teamsLink, meetingId);
+        const matchedEvent = await findCalendarEventByGraph(meetingId);
         if (!matchedEvent) {
           notifyInfo(item, "No matching calendar event found. Opening event dialog.");
-          openCreateEventDialog(item, teamsLink);
+          openCreateEventDialog(item, null);
           return;
         }
 
-        const locationLink = matchedEvent.joinWebUrl || teamsLink;
-        await updateCalendarEventLocationGraph(matchedEvent.id, locationLink);
+        assertValidTeamsMeetJoinWebUrl(matchedEvent.joinWebUrl);
+        await updateCalendarEventLocationGraph(matchedEvent.id, matchedEvent.joinWebUrl);
         notifySuccess(item);
       } catch (error) {
         logDebug("Graph update failed", { message: error.message });
@@ -493,22 +489,14 @@ function escapeXml(value) {
     .replace(/'/g, "&apos;");
 }
 
-function extractMeetingId(bodyHtml, teamsLink) {
-  if (teamsLink) {
-    const linkMatch = teamsLink.match(/19:meeting_[^/?"'\\s<>]+/i);
-    if (linkMatch) {
-      return linkMatch[0];
-    }
-  }
-
-  const combined = `${bodyHtml} ${teamsLink || ""}`;
-  const decoded = decodeHtmlEntities(decodeLink(combined));
+function extractMeetingId(bodyHtml) {
+  const decoded = decodeHtmlEntities(decodeLink(bodyHtml || ""));
   const match = decoded.match(/19:meeting_[^/?"'\\s<>]+/i);
   if (match) {
     return match[0];
   }
 
-  const encodedMatch = combined.match(/19%3Ameeting_[^"'\\s<>%]+/i);
+  const encodedMatch = String(bodyHtml || "").match(/19%3Ameeting_[^"'\\s<>%]+/i);
   if (encodedMatch) {
     return decodeLink(encodedMatch[0]);
   }
@@ -516,14 +504,14 @@ function extractMeetingId(bodyHtml, teamsLink) {
   return null;
 }
 
-async function findCalendarEventByGraph(teamsLink, meetingId) {
+async function findCalendarEventByGraph(meetingId) {
   const token = await getGraphAccessToken();
   const start = new Date();
   const end = new Date(start.getTime() + GRAPH_SEARCH_DAYS * 24 * 60 * 60 * 1000);
   let url = `${GRAPH_BASE_URL}/me/calendarView?startDateTime=${encodeURIComponent(
     start.toISOString()
   )}&endDateTime=${encodeURIComponent(end.toISOString())}` +
-    "&$select=id,subject,body,location,onlineMeeting,onlineMeetingUrl,start,end";
+    "&$select=id,subject,body,location,onlineMeeting,start,end";
 
   while (url) {
     logDebug("Graph calendarView request", {
@@ -551,12 +539,12 @@ async function findCalendarEventByGraph(teamsLink, meetingId) {
     const items = data.value || [];
     logDebug("Graph calendarView items", {
       count: items.length,
-      sample: items.slice(0, 5).map((item) => summarizeGraphItem(item, teamsLink, meetingId))
+      sample: items.slice(0, 5).map((item) => summarizeGraphItem(item, meetingId))
     });
 
     for (let i = 0; i < items.length; i += 1) {
-      if (eventMatchesTeams(items[i], teamsLink, meetingId)) {
-        const joinWebUrl = await fetchEventJoinWebUrl(token, items[i].id, items[i]);
+      if (eventMatchesTeams(items[i], meetingId)) {
+        const joinWebUrl = await fetchEventJoinWebUrl(token, items[i].id);
         return {
           id: items[i].id,
           joinWebUrl
@@ -570,11 +558,11 @@ async function findCalendarEventByGraph(teamsLink, meetingId) {
   return null;
 }
 
-async function updateCalendarEventLocationGraph(eventId, teamsLink) {
+async function updateCalendarEventLocationGraph(eventId, joinWebUrl) {
   const token = await getGraphAccessToken();
   const body = {
     location: {
-      displayName: teamsLink
+      displayName: joinWebUrl
     }
   };
   logDebug("Graph update request", {
@@ -602,15 +590,10 @@ async function updateCalendarEventLocationGraph(eventId, teamsLink) {
   }
 }
 
-async function fetchEventJoinWebUrl(token, eventId, seedEvent) {
-  const fallback = getEventJoinWebUrl(seedEvent);
-  if (!eventId) {
-    return fallback;
-  }
-
+async function fetchEventJoinWebUrl(token, eventId) {
   const url = `${GRAPH_BASE_URL}/me/events/${encodeURIComponent(
     eventId
-  )}?$select=onlineMeeting,onlineMeetingUrl`;
+  )}?$select=onlineMeeting`;
   logDebug("Graph event detail request", {
     method: "GET",
     url,
@@ -627,11 +610,12 @@ async function fetchEventJoinWebUrl(token, eventId, seedEvent) {
 
   await logGraphResponse("eventDetail", response);
   if (!response.ok) {
-    return fallback;
+    const text = await response.text();
+    throw new Error(`Graph event detail failed: ${response.status} ${text}`);
   }
 
   const event = await response.json();
-  return getEventJoinWebUrl(event) || fallback;
+  return getEventJoinWebUrl(event);
 }
 
 async function getGraphAccessToken() {
@@ -669,30 +653,19 @@ async function getGraphAccessToken() {
   return token;
 }
 
-function eventMatchesTeams(event, teamsLink, meetingId) {
+function eventMatchesTeams(event, meetingId) {
   const bodyText = normalizeText(event.body && event.body.content ? event.body.content : "");
   const onlineUrl = normalizeText(getEventJoinWebUrl(event));
   const locationText = normalizeText(
     event.location && event.location.displayName ? event.location.displayName : ""
   );
   const normalizedMeetingId = normalizeText(meetingId || "");
-  const normalizedTeamsLink = normalizeText(teamsLink || "");
 
   if (normalizedMeetingId) {
     if (
       bodyText.includes(normalizedMeetingId) ||
       onlineUrl.includes(normalizedMeetingId) ||
       locationText.includes(normalizedMeetingId)
-    ) {
-      return true;
-    }
-  }
-
-  if (normalizedTeamsLink) {
-    if (
-      bodyText.includes(normalizedTeamsLink) ||
-      onlineUrl.includes(normalizedTeamsLink) ||
-      locationText.includes(normalizedTeamsLink)
     ) {
       return true;
     }
@@ -909,7 +882,7 @@ function normalizeText(text) {
   return cleaned.toLowerCase();
 }
 
-function summarizeGraphItem(item, teamsLink, meetingId) {
+function summarizeGraphItem(item, meetingId) {
   const bodyText = normalizeText(item.body && item.body.content ? item.body.content : "");
   const joinWebUrl = getEventJoinWebUrl(item);
   const onlineUrl = normalizeText(joinWebUrl);
@@ -917,12 +890,10 @@ function summarizeGraphItem(item, teamsLink, meetingId) {
     item.location && item.location.displayName ? item.location.displayName : ""
   );
   const normalizedMeetingId = normalizeText(meetingId || "");
-  const normalizedTeamsLink = normalizeText(teamsLink || "");
   return {
     id: item.id || null,
     subject: item.subject || null,
     start: item.start && item.start.dateTime ? item.start.dateTime : null,
-    onlineMeetingUrl: item.onlineMeetingUrl || null,
     joinWebUrl: joinWebUrl || null,
     location: item.location && item.location.displayName ? item.location.displayName : null,
     hasMeetingId: Boolean(
@@ -930,30 +901,21 @@ function summarizeGraphItem(item, teamsLink, meetingId) {
         (bodyText.includes(normalizedMeetingId) ||
           onlineUrl.includes(normalizedMeetingId) ||
           locationText.includes(normalizedMeetingId))
-    ),
-    hasTeamsLink: Boolean(
-      normalizedTeamsLink &&
-        (bodyText.includes(normalizedTeamsLink) ||
-          onlineUrl.includes(normalizedTeamsLink) ||
-          locationText.includes(normalizedTeamsLink))
     )
   };
 }
 
 function getEventJoinWebUrl(event) {
-  if (!event) {
-    return "";
-  }
-  if (event.onlineMeeting && event.onlineMeeting.joinWebUrl) {
+  if (event && event.onlineMeeting && event.onlineMeeting.joinWebUrl) {
     return event.onlineMeeting.joinWebUrl;
   }
-  if (event.onlineMeeting && event.onlineMeeting.joinUrl) {
-    return event.onlineMeeting.joinUrl;
-  }
-  if (event.onlineMeetingUrl) {
-    return event.onlineMeetingUrl;
-  }
   return "";
+}
+
+function assertValidTeamsMeetJoinWebUrl(url) {
+  if (!url || !url.includes("/meet/")) {
+    throw new Error("Invalid Teams guest join URL: expected onlineMeeting.joinWebUrl with /meet/.");
+  }
 }
 
 function extractSafeLinkTarget(safeLinkUrl) {

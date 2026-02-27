@@ -523,8 +523,7 @@ async function findCalendarEventByGraph(teamsLink, meetingId) {
   let url = `${GRAPH_BASE_URL}/me/calendarView?startDateTime=${encodeURIComponent(
     start.toISOString()
   )}&endDateTime=${encodeURIComponent(end.toISOString())}` +
-    "&$select=id,subject,body,location,onlineMeeting,onlineMeetingUrl,start,end" +
-    "&$expand=onlineMeeting($select=joinWebUrl)";
+    "&$select=id,subject,body,location,onlineMeeting,onlineMeetingUrl,start,end";
 
   while (url) {
     logDebug("Graph calendarView request", {
@@ -557,9 +556,10 @@ async function findCalendarEventByGraph(teamsLink, meetingId) {
 
     for (let i = 0; i < items.length; i += 1) {
       if (eventMatchesTeams(items[i], teamsLink, meetingId)) {
+        const joinWebUrl = await fetchEventJoinWebUrl(token, items[i].id, items[i]);
         return {
           id: items[i].id,
-          joinWebUrl: getEventJoinWebUrl(items[i])
+          joinWebUrl
         };
       }
     }
@@ -600,6 +600,38 @@ async function updateCalendarEventLocationGraph(eventId, teamsLink) {
     const text = await response.text();
     throw new Error(`Graph update failed: ${response.status} ${text}`);
   }
+}
+
+async function fetchEventJoinWebUrl(token, eventId, seedEvent) {
+  const fallback = getEventJoinWebUrl(seedEvent);
+  if (!eventId) {
+    return fallback;
+  }
+
+  const url = `${GRAPH_BASE_URL}/me/events/${encodeURIComponent(
+    eventId
+  )}?$select=onlineMeeting,onlineMeetingUrl`;
+  logDebug("Graph event detail request", {
+    method: "GET",
+    url,
+    headers: {
+      Authorization: exposeAuthHeader(token)
+    }
+  });
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  await logGraphResponse("eventDetail", response);
+  if (!response.ok) {
+    return fallback;
+  }
+
+  const event = await response.json();
+  return getEventJoinWebUrl(event) || fallback;
 }
 
 async function getGraphAccessToken() {
@@ -914,6 +946,9 @@ function getEventJoinWebUrl(event) {
   }
   if (event.onlineMeeting && event.onlineMeeting.joinWebUrl) {
     return event.onlineMeeting.joinWebUrl;
+  }
+  if (event.onlineMeeting && event.onlineMeeting.joinUrl) {
+    return event.onlineMeeting.joinUrl;
   }
   if (event.onlineMeetingUrl) {
     return event.onlineMeetingUrl;

@@ -9,10 +9,10 @@ Office.onReady(() => {
   // If needed, Office.js is ready to be called.
 });
 
-const BUILD_TAG = "v1.9.1";
-const BUILD_MARKER = "2026-02-27T18:14Z";
+const BUILD_TAG = "v1.9.0";
+const BUILD_MARKER = "2026-02-18T11:10Z";
 const DEFAULT_BASE_URL = requireConfig("APP_BASE_URL", process.env.APP_BASE_URL);
-const CACHE_BUSTER = "1.9.1";
+const CACHE_BUSTER = "1.9.0";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
@@ -63,8 +63,12 @@ function addTeamsLinkToLocation(event) {
     }
 
     const bodyHtml = bodyResult.value;
-    const bodyJoinWebUrl = extractTeamsMeetJoinWebUrl(bodyHtml);
-    logDebug("Teams /meet/ link match", { found: Boolean(bodyJoinWebUrl) });
+    const rawBodyJoinWebUrl = extractTeamsMeetJoinWebUrl(bodyHtml);
+    const bodyJoinWebUrl = sanitizeTeamsJoinUrl(rawBodyJoinWebUrl);
+    logDebug("Teams /meet/ link match", {
+      found: Boolean(bodyJoinWebUrl),
+      changedBySanitizer: rawBodyJoinWebUrl !== bodyJoinWebUrl
+    });
 
     if (!bodyJoinWebUrl) {
       notifyInfo(item, "No Teams /meet/ join link found in this invite body.");
@@ -888,6 +892,27 @@ function getEventJoinWebUrl(event) {
 function assertValidTeamsMeetJoinWebUrl(url) {
   if (!url || !url.includes("/meet/")) {
     throw new Error("Invalid Teams guest join URL: expected a /meet/ link.");
+  }
+}
+
+function sanitizeTeamsJoinUrl(url) {
+  if (!url) {
+    return "";
+  }
+
+  const cleaned = String(url)
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+    .replace(/[\x00-\x1F\x7F]/g, "")
+    .trim();
+
+  if (!cleaned) {
+    return "";
+  }
+
+  try {
+    return new URL(cleaned).toString();
+  } catch (error) {
+    return cleaned;
   }
 }
 

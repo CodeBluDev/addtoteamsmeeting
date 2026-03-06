@@ -9,10 +9,10 @@ Office.onReady(() => {
   // If needed, Office.js is ready to be called.
 });
 
-const BUILD_TAG = "v1.9.0";
-const BUILD_MARKER = "2026-02-18T11:10Z";
+const BUILD_TAG = "v1.9.2";
+const BUILD_MARKER = "2026-03-06T17:29Z";
 const DEFAULT_BASE_URL = requireConfig("APP_BASE_URL", process.env.APP_BASE_URL);
-const CACHE_BUSTER = "1.9.0";
+const CACHE_BUSTER = "1.9.2";
 const EWS_MESSAGES_NS = "http://schemas.microsoft.com/exchange/services/2006/messages";
 const EWS_TYPES_NS = "http://schemas.microsoft.com/exchange/services/2006/types";
 const DEBUG_LOGS = true;
@@ -67,7 +67,9 @@ function addTeamsLinkToLocation(event) {
     const bodyJoinWebUrl = sanitizeTeamsJoinUrl(rawBodyJoinWebUrl);
     logDebug("Teams /meet/ link match", {
       found: Boolean(bodyJoinWebUrl),
-      changedBySanitizer: rawBodyJoinWebUrl !== bodyJoinWebUrl
+      changedBySanitizer: rawBodyJoinWebUrl !== bodyJoinWebUrl,
+      rawSignature: debugStringSignature(rawBodyJoinWebUrl),
+      sanitizedSignature: debugStringSignature(bodyJoinWebUrl)
     });
 
     if (!bodyJoinWebUrl) {
@@ -94,8 +96,25 @@ function addTeamsLinkToLocation(event) {
           return;
         }
 
+        const calendarBodyJoinWebUrl = sanitizeTeamsJoinUrl(
+          extractTeamsMeetJoinWebUrl(
+            matchedEvent.body && matchedEvent.body.content ? matchedEvent.body.content : ""
+          )
+        );
+        const locationToWrite = sanitizeTeamsJoinUrl(bodyJoinWebUrl);
+        logDebug("Calendar body vs location write comparison", {
+          matchesExactly: calendarBodyJoinWebUrl === locationToWrite,
+          calendarBodySignature: debugStringSignature(calendarBodyJoinWebUrl),
+          locationWriteSignature: debugStringSignature(locationToWrite),
+          currentLocationSignature: debugStringSignature(
+            matchedEvent.location && matchedEvent.location.displayName
+              ? matchedEvent.location.displayName
+              : ""
+          )
+        });
+
         assertValidTeamsMeetJoinWebUrl(bodyJoinWebUrl);
-        await updateCalendarEventLocationGraph(matchedEvent.id, bodyJoinWebUrl);
+        await updateCalendarEventLocationGraph(matchedEvent.id, locationToWrite);
         notifySuccess(item);
       } catch (error) {
         logDebug("Graph update failed", { message: error.message });
@@ -502,7 +521,7 @@ function escapeXml(value) {
 }
 
 function extractMeetingId(bodyHtml) {
-  const decoded = decodeHtmlEntities(decodeLink(bodyHtml || ""));
+  const decoded = decodeHtmlEntities(String(bodyHtml || ""));
   const match = decoded.match(/19:meeting_[^/?"'\\s<>]+/i);
   if (match) {
     return match[0];
@@ -556,9 +575,7 @@ async function findCalendarEventByGraph(meetingId) {
 
     for (let i = 0; i < items.length; i += 1) {
       if (eventMatchesTeams(items[i], meetingId)) {
-        return {
-          id: items[i].id
-        };
+        return items[i];
       }
     }
 
@@ -786,16 +803,16 @@ function extractTeamsMeetJoinWebUrl(bodyHtml) {
   const urls = bodyHtml.match(/https?:\/\/[^\s"'<>]+/gi) || [];
   for (let i = 0; i < urls.length; i += 1) {
     const rawUrl = urls[i];
-    const cleanedUrl = rawUrl.replace(/&amp;/g, "&");
+    const cleanedUrl = normalizeTeamsUrlCandidate(rawUrl);
 
     if (meetRegex.test(cleanedUrl)) {
-      return decodeLink(cleanedUrl);
+      return cleanedUrl;
     }
 
     if (safeLinksRegex.test(cleanedUrl)) {
       const extracted = extractSafeLinkTarget(cleanedUrl);
       if (extracted) {
-        const decoded = decodeLink(extracted);
+        const decoded = normalizeTeamsUrlCandidate(extracted);
         if (meetRegex.test(decoded)) {
           return decoded;
         }
@@ -820,7 +837,7 @@ function findTeamsMeetLinkInText(text) {
   }
 
   for (let i = 0; i < candidates.length; i += 1) {
-    const cleaned = decodeLink(candidates[i]);
+    const cleaned = normalizeTeamsUrlCandidate(candidates[i]);
     if (cleaned) {
       return cleaned;
     }
@@ -900,20 +917,51 @@ function sanitizeTeamsJoinUrl(url) {
     return "";
   }
 
-  const cleaned = String(url)
-    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
-    .replace(/[\x00-\x1F\x7F]/g, "")
-    .trim();
+  const cleaned = normalizeTeamsUrlCandidate(url);
 
   if (!cleaned) {
     return "";
   }
 
   try {
-    return new URL(cleaned).toString();
+    const parsed = new URL(cleaned);
+    const hostname = parsed.hostname.toLowerCase();
+    const pathname = parsed.pathname || "";
+    if (parsed.protocol !== "https:" || hostname !== "teams.microsoft.com") {
+      return "";
+    }
+    if (!/^\/meet\/[^/?#]+/.test(pathname)) {
+      return "";
+    }
+    parsed.hash = "";
+    return parsed.toString().replace(/[^\x20-\x7E]/g, "");
   } catch (error) {
-    return cleaned;
+    return cleaned.replace(/[^\x20-\x7E]/g, "");
   }
+}
+
+function normalizeTeamsUrlCandidate(url) {
+  return String(url || "")
+    .replace(/&amp;/g, "&")
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, "")
+    .replace(/[\x00-\x1F\x7F]/g, "")
+    .replace(/\u00A0/g, " ")
+    .trim()
+    .replace(/[),.;!?]+$/g, "");
+}
+
+function debugStringSignature(value) {
+  const text = String(value || "");
+  const sampleSize = 160;
+  const chars = [];
+  for (let i = 0; i < text.length && i < sampleSize; i += 1) {
+    chars.push(text.charCodeAt(i));
+  }
+
+  return {
+    length: text.length,
+    sampleCharCodes: chars
+  };
 }
 
 function extractSafeLinkTarget(safeLinkUrl) {
